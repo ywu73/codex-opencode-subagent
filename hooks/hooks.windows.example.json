@@ -1,0 +1,19 @@
+{
+  "description": "One-shot plaintext task handoff for the OpenCode-backed opencode_worker.",
+  "hooks": {
+    "SubagentStart": [
+      {
+        "matcher": "^opencode_worker$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"C:\\\\ABSOLUTE\\\\PATH\\\\TO\\\\plaintext-handoff.ps1\" -Mode hook",
+            "timeout": 10,
+            "statusMessage": "Delivering the staged OpenCode assignment",
+            "additionalContextLimit": 0
+          }
+        ]
+      }
+    ]
+  }
+}
