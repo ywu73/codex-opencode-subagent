@@ -17,7 +17,18 @@ else:
     fcntl = None
 
 
-AGENT_TYPE = "opencode_worker"
+# The worker family: one agent type per OpenCode Go model. The parent stages an
+# assignment for one exact type and spawns that same type; the Hook quarantines
+# a mismatch instead of delivering to the wrong model.
+AGENT_TYPES = (
+    "opencode_worker",
+    "opencode_worker_pro",
+    "opencode_worker_glm",
+    "opencode_worker_kimi",
+)
+DEFAULT_AGENT_TYPE = "opencode_worker"
+# Shared file-prefix family name for the single-slot dispatch state.
+AGENT_TYPE = DEFAULT_AGENT_TYPE
 
 
 class EnvelopeError(ValueError):
@@ -88,7 +99,7 @@ def validate_envelope(value: object) -> Tuple[dict, datetime.datetime]:
         raise EnvelopeError("the handoff envelope must be a JSON object")
     if type(value.get("schema")) is not int or value["schema"] != 1:
         raise EnvelopeError("the handoff envelope has an invalid schema")
-    if value.get("agent_type") != AGENT_TYPE:
+    if value.get("agent_type") not in AGENT_TYPES:
         raise EnvelopeError("the handoff envelope has an invalid agent type")
     if not isinstance(value.get("handoff_id"), str) or not value["handoff_id"]:
         raise EnvelopeError("the handoff envelope has an invalid handoff id")
@@ -141,7 +152,7 @@ def reconcile_claims(root: pathlib.Path, now: datetime.datetime) -> None:
             transport_failure("cleaning an expired claim", error)
 
 
-def stage_locked(root: pathlib.Path, ttl_seconds: int, assignment: str) -> Tuple[dict, pathlib.Path]:
+def stage_locked(root: pathlib.Path, ttl_seconds: int, assignment: str, agent_type: str) -> Tuple[dict, pathlib.Path]:
     pending = root / f"{AGENT_TYPE}.pending.json"
     now = datetime.datetime.now(datetime.timezone.utc)
     replace_expired = False
@@ -168,7 +179,7 @@ def stage_locked(root: pathlib.Path, ttl_seconds: int, assignment: str) -> Tuple
     envelope = {
         "schema": 1,
         "handoff_id": str(uuid.uuid4()),
-        "agent_type": AGENT_TYPE,
+        "agent_type": agent_type,
         "created_at": now.isoformat(),
         "expires_at": (now + datetime.timedelta(seconds=ttl_seconds)).isoformat(),
         "assignment": assignment,
@@ -205,19 +216,19 @@ def stage_locked(root: pathlib.Path, ttl_seconds: int, assignment: str) -> Tuple
     return envelope, pending
 
 
-def stage(root: pathlib.Path, ttl_seconds: int) -> None:
+def stage(root: pathlib.Path, ttl_seconds: int, agent_type: str) -> None:
     assignment = sys.stdin.read()
     if not assignment.strip():
         fail("Refusing to stage an empty focused OpenCode assignment.", 2)
 
     with state_lock(root):
-        envelope, pending = stage_locked(root, ttl_seconds, assignment)
+        envelope, pending = stage_locked(root, ttl_seconds, assignment, agent_type)
 
     json.dump(
         {
             "staged": True,
             "handoff_id": envelope["handoff_id"],
-            "agent_type": AGENT_TYPE,
+            "agent_type": envelope["agent_type"],
             "expires_at": envelope["expires_at"],
             "pending_path": str(pending),
         },
@@ -263,10 +274,19 @@ def run_target_hook_locked(root: pathlib.Path, hook_input: dict) -> None:
         except OSError as error:
             transport_failure("removing an expired pending handoff", error)
         fail("The pending focused OpenCode handoff expired before the child started.", 6)
+    hook_agent_type = hook_input.get("agent_type")
+    if envelope["agent_type"] != hook_agent_type:
+        quarantine_claim(claimed, agent_id)
+        fail(
+            f"The pending OpenCode handoff targets agent type {envelope['agent_type']} "
+            f"but SubagentStart fired for {hook_agent_type}. Quarantined; resolve it "
+            "before staging another.",
+            7,
+        )
     assignment = envelope["assignment"]
 
     additional_context = (
-        "You are the spawned opencode_worker child, not the root agent. The parent supplied the complete task below "
+        f"You are the spawned {envelope['agent_type']} child, not the root agent. The parent supplied the complete task below "
         "through a one-time plaintext handoff because provider-internal collaboration ciphertext is not a reliable "
         "cross-provider task carrier. Treat this as the task contract. Do not continue the parent's unrelated work "
         "and do not report the assignment missing merely because the encrypted collaboration payload is unreadable.\n\n"
@@ -300,7 +320,7 @@ def run_hook(root: pathlib.Path) -> None:
         fail(f"SubagentStart hook input was invalid JSON: {error}", 4)
     if not isinstance(hook_input, dict):
         fail("SubagentStart hook input must be a JSON object.", 4)
-    if hook_input.get("hook_event_name") != "SubagentStart" or hook_input.get("agent_type") != AGENT_TYPE:
+    if hook_input.get("hook_event_name") != "SubagentStart" or hook_input.get("agent_type") not in AGENT_TYPES:
         return
 
     with state_lock(root):
@@ -312,12 +332,13 @@ def main() -> None:
     parser.add_argument("--mode", required=True, choices=("stage", "hook"))
     parser.add_argument("--ttl-seconds", type=int, default=300)
     parser.add_argument("--state-directory")
+    parser.add_argument("--agent-type", default=DEFAULT_AGENT_TYPE, choices=AGENT_TYPES)
     arguments = parser.parse_args()
     if not 1 <= arguments.ttl_seconds <= 3600:
         fail("--ttl-seconds must be between 1 and 3600.", 8)
     root = state_root(arguments.state_directory)
     if arguments.mode == "stage":
-        stage(root, arguments.ttl_seconds)
+        stage(root, arguments.ttl_seconds, arguments.agent_type)
         return
     run_hook(root)
 

@@ -38,6 +38,12 @@ def resolve_script():
 
 SCRIPT = resolve_script()
 AGENT_TYPE = "opencode_worker"
+AGENT_TYPES = (
+    "opencode_worker",
+    "opencode_worker_pro",
+    "opencode_worker_glm",
+    "opencode_worker_kimi",
+)
 
 
 def utc_timestamp(*, seconds_from_now=0):
@@ -97,11 +103,11 @@ class PlaintextHandoffCliTests(unittest.TestCase):
         self.state_directory.mkdir(parents=True, exist_ok=True)
         self.pending_path.write_text(json.dumps(value), encoding="utf-8")
 
-    def target_hook_input(self, agent_id="agent-1"):
+    def target_hook_input(self, agent_id="agent-1", agent_type=AGENT_TYPE):
         return json.dumps(
             {
                 "hook_event_name": "SubagentStart",
-                "agent_type": AGENT_TYPE,
+                "agent_type": agent_type,
                 "agent_id": agent_id,
             }
         )
@@ -171,6 +177,92 @@ class PlaintextHandoffCliTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout, "")
         self.assertEqual(json.loads(self.pending_path.read_text()), original)
+
+    # Worker family contract: each OpenCode Go model is its own agent type; the
+    # staged type must equal the spawned type.
+
+    def test_stage_accepts_alternate_agent_type_and_hook_delivers_to_exact_type(self):
+        assignment = "Summarize with the pro worker."
+        selected = "opencode_worker_pro"
+
+        staged = self.invoke("stage", assignment, "--agent-type", selected)
+
+        self.assertEqual(staged.returncode, 0, staged.stderr)
+        staged_output = json.loads(staged.stdout)
+        self.assertEqual(staged_output["agent_type"], selected)
+        envelope = json.loads(self.pending_path.read_text(encoding="utf-8"))
+        self.assertEqual(envelope["agent_type"], selected)
+
+        delivered = self.invoke(
+            "hook", self.target_hook_input("pro-agent", agent_type=selected)
+        )
+
+        self.assertEqual(delivered.returncode, 0, delivered.stderr)
+        output = json.loads(delivered.stdout)["hookSpecificOutput"]
+        self.assertIn(
+            "You are the spawned opencode_worker_pro child", output["additionalContext"]
+        )
+        self.assertIn("BEGIN PARENT ASSIGNMENT\n" + assignment, output["additionalContext"])
+        self.assertFalse(self.handoff_state_files())
+
+    def test_stage_accepts_every_family_agent_type(self):
+        for selected in AGENT_TYPES:
+            with self.subTest(agent_type=selected):
+                state_directory = self.state_directory / selected
+                result = self.invoke_at(
+                    state_directory,
+                    "stage",
+                    f"assignment for {selected}",
+                    "--agent-type",
+                    selected,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                staged = json.loads(result.stdout)
+                self.assertEqual(staged["agent_type"], selected)
+                pending = state_directory / f"{AGENT_TYPE}.pending.json"
+                self.assertEqual(
+                    json.loads(pending.read_text(encoding="utf-8"))["agent_type"],
+                    selected,
+                )
+
+    def test_stage_rejects_unknown_agent_type_without_staging(self):
+        result = self.invoke("stage", "assignment", "--agent-type", "opencode_worker_bogus")
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertFalse(self.pending_path.exists())
+
+    def test_hook_quarantines_agent_type_mismatch_without_delivery(self):
+        # The parent staged for opencode_worker_pro but spawned opencode_worker.
+        # The Hook must quarantine the claim instead of handing the assignment
+        # to the wrong model.
+        assignment = "must not reach the wrong model"
+        self.write_pending(envelope(assignment, agent_type="opencode_worker_pro"))
+
+        result = self.invoke("hook", self.target_hook_input("wrong-model-agent"))
+
+        self.assertEqual(result.returncode, 7, result.stderr)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("opencode_worker_pro", result.stderr)
+        self.assertFalse(self.pending_path.exists())
+        quarantined = list(self.state_directory.glob(f"{AGENT_TYPE}.failed.*.json"))
+        self.assertEqual(len(quarantined), 1)
+        self.assertEqual(
+            json.loads(quarantined[0].read_text(encoding="utf-8"))["assignment"],
+            assignment,
+        )
+
+    def test_hook_preserves_pending_with_unknown_envelope_agent_type(self):
+        original = envelope("must survive", agent_type="mystery_agent")
+        self.write_pending(original)
+
+        result = self.invoke("hook", self.target_hook_input())
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("Traceback", result.stderr)
+        remaining = self.handoff_state_files()
+        self.assertEqual(len(remaining), 1)
+        self.assertEqual(json.loads(remaining[0].read_text()), original)
 
     def test_stage_refuses_to_replace_an_active_pending_assignment(self):
         original = envelope("first assignment")

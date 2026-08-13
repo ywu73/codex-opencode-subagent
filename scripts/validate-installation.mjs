@@ -7,20 +7,41 @@ import path from "node:path";
 const codexHome = process.env.CODEX_HOME || path.join(os.homedir(), ".codex");
 const checks = {
   opencode_api_key_present: Boolean(process.env.OPENCODE_API_KEY),
+  agents_installed: true,
+  agent_provider_configured: true,
+  agent_no_plaintext_key: true,
 };
 
 try {
-  const agentPath = path.join(codexHome, "agents", "opencode-worker.toml");
-  const agent = readFileSync(agentPath, "utf8");
-  checks.agent_installed = agent.includes("opencode_worker");
-  checks.agent_provider_configured =
-    agent.includes('model_provider = "opencode_go"') &&
-    agent.includes('model = "deepseek-v4-flash"') &&
-    agent.includes('base_url = "https://opencode.ai/zen/go/v1"') &&
-    agent.includes('wire_api = "responses"') &&
-    agent.includes("env_key = \"OPENCODE_API_KEY\"");
-  checks.agent_no_plaintext_key = !agent.includes("OPENCODE_API_KEY =") &&
-    !agent.includes("experimental_bearer_token");
+  const agentFiles = [
+    ["opencode-worker.toml", "opencode_worker", "deepseek-v4-flash"],
+    ["opencode-worker-pro.toml", "opencode_worker_pro", "deepseek-v4-pro"],
+    ["opencode-worker-glm.toml", "opencode_worker_glm", "glm-5.2"],
+    ["opencode-worker-kimi.toml", "opencode_worker_kimi", "kimi-k2.7-code"],
+  ];
+  for (const [fileName, agentName, model] of agentFiles) {
+    const agent = readFileSync(path.join(codexHome, "agents", fileName), "utf8");
+    if (!agent.includes(agentName)) {
+      checks.agents_installed = false;
+    }
+    if (
+      !(
+        agent.includes('model_provider = "opencode_go"') &&
+        agent.includes(`model = "${model}"`) &&
+        agent.includes('base_url = "https://opencode.ai/zen/go/v1"') &&
+        agent.includes('wire_api = "responses"') &&
+        agent.includes('env_key = "OPENCODE_API_KEY"')
+      )
+    ) {
+      checks.agent_provider_configured = false;
+    }
+    if (
+      agent.includes("OPENCODE_API_KEY =") ||
+      agent.includes("experimental_bearer_token")
+    ) {
+      checks.agent_no_plaintext_key = false;
+    }
+  }
 
   const skillPath = path.join(codexHome, "skills", "use-opencode-worker", "SKILL.md");
   const skill = readFileSync(skillPath, "utf8");
@@ -42,8 +63,9 @@ try {
     }
   }
   checks.hook_registered =
-    hooksText.includes("^opencode_worker$") &&
-    hooksText.includes("plaintext_handoff.py");
+    hooksText.includes(
+      "^(opencode_worker|opencode_worker_pro|opencode_worker_glm|opencode_worker_kimi)$",
+    ) && hooksText.includes("plaintext_handoff.py");
 } catch (error) {
   checks.install_checks_failed = error.message;
 }

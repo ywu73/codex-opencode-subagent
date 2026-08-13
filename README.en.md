@@ -7,9 +7,18 @@ and it does not require CC Switch, MCP, a plugin, or another Codex CLI.
 
 It follows the same architecture as
 [`codex-deepseek-subagent`](https://github.com/Utopia-V/codex-deepseek-subagent):
-`opencode_worker` is a native Codex child whose Agent TOML owns its provider,
-model, base URL, wire API, and `OPENCODE_API_KEY`. A `SubagentStart` Hook
-delivers the parent's one-shot plaintext assignment into the child.
+the `opencode_worker` family are native Codex children; each Agent TOML owns its
+provider, model, base URL, wire API, and `OPENCODE_API_KEY`. A `SubagentStart`
+Hook delivers the parent's one-shot plaintext assignment into the child.
+
+One agent type per model; the parent picks per task:
+
+| Agent type | Model |
+| --- | --- |
+| `opencode_worker` | `deepseek-v4-flash` (default) |
+| `opencode_worker_pro` | `deepseek-v4-pro` |
+| `opencode_worker_glm` | `glm-5.2` |
+| `opencode_worker_kimi` | `kimi-k2.7-code` |
 
 ## Three-step install
 
@@ -28,10 +37,12 @@ Ask Codex to read and follow
 [prompts/install-with-codex.md](prompts/install-with-codex.md) from this
 repository. The installer adds:
 
-- `<codex-home>/agents/opencode-worker.toml`
+- `<codex-home>/agents/opencode-worker.toml` (plus the `-pro`, `-glm`, and
+  `-kimi` variants)
 - `<codex-home>/skills/use-opencode-worker/`
 - `<codex-home>/hooks/codex-opencode-subagent/plaintext_handoff.py`
-- one `SubagentStart` Hook matching `^opencode_worker$`
+- one `SubagentStart` Hook matching
+  `^(opencode_worker|opencode_worker_pro|opencode_worker_glm|opencode_worker_kimi)$`
 - a marked `$use-opencode-worker` index in the personal `AGENTS.md`
 
 It does not switch the main model/provider and makes no OpenCode Go call during
@@ -39,8 +50,9 @@ installation.
 
 ### 3. Trust the Hook, then test
 
-1. Enter `/hooks` in Codex and confirm the Hook matches only `opencode_worker`
-   and points to the installed `plaintext_handoff.py`, then trust it.
+1. Enter `/hooks` in Codex and confirm the Hook matches only the four
+   `opencode_worker` family agent types and points to the installed
+   `plaintext_handoff.py`, then trust it.
 2. Start a new Codex task. A task that was already running is not guaranteed to
    reload the new Hook.
 3. Ask the new task to follow
@@ -50,8 +62,8 @@ installation.
 
 The quick smoke passes only when all of these are true:
 
-- Codex exposes a distinct native child task whose agent type is
-  `opencode_worker`.
+- Codex exposes a distinct native child task whose agent type is the chosen
+  `opencode_worker` family type.
 - The child returns the parent's exact fresh marker and `arithmetic=323`.
 - The one-shot pending handoff is consumed.
 - The main task remains on its original model/provider.

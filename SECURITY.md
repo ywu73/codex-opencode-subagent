@@ -2,17 +2,19 @@
 
 ## API key
 
-`opencode_worker` 使用 `OPENCODE_API_KEY` 作为 provider 凭据。不要把它写进
-TOML、Hook、skill、assignment、聊天或 Issue。
+`opencode_worker` 系列（`opencode_worker` / `opencode_worker_pro` /
+`opencode_worker_glm` / `opencode_worker_kimi`）共用 `OPENCODE_API_KEY` 作为
+provider 凭据。不要把它写进 TOML、Hook、skill、assignment、聊天或 Issue。
 
 如果 key 曾暴露，先在 OpenCode Go 控制台吊销并轮换。不要在公开问题里粘贴 key、
 完整请求头或未脱敏配置。
 
 ## Data boundary
 
-`opencode_worker` 是独立的 Codex child session，直接使用 OpenCode Go 的
+`opencode_worker` 系列是独立的 Codex child session，直接使用 OpenCode Go 的
 Responses API。父 Agent 通过 Hook 交付的 assignment、child 上下文和工具结果会
-发送到 OpenCode Go 配置的模型端点。主 Agent 仍使用当前模型/provider。
+发送到所选模型（`deepseek-v4-flash` / `deepseek-v4-pro` / `glm-5.2` /
+`kimi-k2.7-code`）端点。主 Agent 仍使用当前模型/provider。
 
 不要委派私密源码、密钥、个人数据或受监管材料，除非你已确认 OpenCode Go 及其
 模型服务商的数据处理边界。

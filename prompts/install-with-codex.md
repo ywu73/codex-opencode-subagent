@@ -1,23 +1,25 @@
 # Install with Codex
 
 Copy the prompt below into a Codex task whose workspace is this repository. It
-installs the native OpenCode Go custom subagent, its lazy-loaded handoff skill,
-and the one-shot plaintext task Hook while preserving the current main-agent
-model and provider.
+installs the native OpenCode Go custom subagent family, its lazy-loaded handoff
+skill, and the one-shot plaintext task Hook while preserving the current
+main-agent model and provider.
 
 ```text
-Install the native opencode_worker custom subagent from this repository into my
-personal Codex configuration. Use the repository checkout as the source.
+Install the native opencode_worker custom subagent family (opencode_worker,
+opencode_worker_pro, opencode_worker_glm, opencode_worker_kimi) from this
+repository into my personal Codex configuration. Use the repository checkout as
+the source.
 
 Scope and invariants:
 - Preserve my current main model, model provider, ChatGPT login, and provider
-  configuration. Creating or updating the standalone custom-agent TOML, the
+  configuration. Creating or updating the standalone custom-agent TOMLs, the
   personal use-opencode-worker skill, the user Hook script/configuration, and
   the compact personal AGENTS.md index is expected; this is not a
   zero-configuration installation.
 - Keep the custom-agent registration, model_provider, and
-  [model_providers.opencode_go] definition inside the standalone agent TOML. Do
-  not add [agents.opencode_worker] or [model_providers.opencode_go] to the
+  [model_providers.opencode_go] definition inside each standalone agent TOML. Do
+  not add [agents.opencode_worker*] or [model_providers.opencode_go] to the
   top-level config.toml.
 - Never ask me to paste an API key into chat, never print an existing key, and
   never write a plaintext key into TOML. The only accepted secret name is the
@@ -33,14 +35,21 @@ Procedure:
    CODEX_HOME; otherwise use ~/.codex. Check `codex --version` when available.
    Recommend Codex CLI 0.145.0 or newer, but do not upgrade software unless I
    separately ask.
-2. Inspect the target agents directory, any existing opencode_worker file, the
+2. Inspect the target agents directory, any existing opencode_worker* files, the
    <codex-home>/skills/use-opencode-worker directory, the applicable personal
    AGENTS.md, user hooks.json, inline Hook configuration, and
    <codex-home>/hooks/codex-opencode-subagent before changing anything. Preserve
    unrelated configuration. If an existing agent, skill, or Hook at the intended
    identity serves a different purpose, stop and report the conflict.
-3. Install exactly one agent file as
-   <codex-home>/agents/opencode-worker.toml from the repository checkout.
+3. Install exactly these four agent files from the repository checkout:
+   <codex-home>/agents/opencode-worker.toml (opencode_worker,
+   deepseek-v4-flash),
+   <codex-home>/agents/opencode-worker-pro.toml (opencode_worker_pro,
+   deepseek-v4-pro),
+   <codex-home>/agents/opencode-worker-glm.toml (opencode_worker_glm,
+   glm-5.2), and
+   <codex-home>/agents/opencode-worker-kimi.toml (opencode_worker_kimi,
+   kimi-k2.7-code).
 4. Install skills/use-opencode-worker including its SKILL.md.
 5. Install the platform handoff script under
    <codex-home>/hooks/codex-opencode-subagent:
@@ -50,7 +59,8 @@ Procedure:
    path cannot be installed instead of silently making inherited turns the
    default.
 6. Install one SubagentStart command Hook whose matcher is exactly
-   ^opencode_worker$, whose timeout is 10 seconds, whose
+   ^(opencode_worker|opencode_worker_pro|opencode_worker_glm|opencode_worker_kimi)$,
+   whose timeout is 10 seconds, whose
    additionalContextLimit is 0, and whose command invokes the absolute path of
    the installed platform handoff script in hook mode. Use the corresponding
    hooks/hooks.*.example.json as the structural source.
@@ -61,12 +71,14 @@ Procedure:
    start/end markers so future updates are idempotent. Read back the merged
    block and confirm that it tells the parent to load $use-opencode-worker
    before spawning, continuing, or troubleshooting the role.
-8. Parse the installed agent file with a real TOML parser. Confirm that it names
-   opencode_worker, selects model_provider opencode_go and model
-   deepseek-v4-flash, uses the Responses wire API, declares a 1000000-token
-   model context window, defaults
-   to read-only, contains no model_reasoning_effort, contains its own
-   [model_providers.opencode_go] definition, and contains no plaintext
+8. Parse each installed agent file with a real TOML parser. Confirm that the
+   four files name opencode_worker, opencode_worker_pro, opencode_worker_glm,
+   and opencode_worker_kimi respectively, select model_provider opencode_go and
+   respectively the models deepseek-v4-flash, deepseek-v4-pro, glm-5.2, and
+   kimi-k2.7-code, use the Responses wire API, declare a 1000000-token
+   model context window, default
+   to read-only, contain no model_reasoning_effort, each contain their own
+   [model_providers.opencode_go] definition, and contain no plaintext
    credential. Confirm that the top-level config.toml did not gain any
    main-model, main-provider, agent-registration, or OpenCode Go provider
    entries.

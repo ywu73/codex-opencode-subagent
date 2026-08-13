@@ -25,7 +25,10 @@ Run the repository's native OpenCode Go subagent smoke test.
    mode:
    python3 "<codex-home>/hooks/codex-opencode-subagent/plaintext_handoff.py" --mode stage
    Require a successful JSON result naming agent_type opencode_worker. Do not
-   print the assignment or marker merely to stage it.
+   print the assignment or marker merely to stage it. (To smoke a different
+   worker model, stage with --agent-type opencode_worker_pro,
+   opencode_worker_glm, or opencode_worker_kimi and spawn that exact type in
+   step 4; the reported agent type must match.)
 4. Immediately use Codex's native subagent mechanism to spawn the exact agent
    type opencode_worker with a unique task name and fork_turns="none". Its spawn
    message may say only that it must execute the assignment supplied by the

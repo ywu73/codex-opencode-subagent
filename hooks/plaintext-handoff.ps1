@@ -6,13 +6,22 @@ param(
     [ValidateRange(1, 3600)]
     [int]$TtlSeconds = 300,
 
-    [string]$StateDirectory
+    [string]$StateDirectory,
+
+    [ValidateSet("opencode_worker", "opencode_worker_pro", "opencode_worker_glm", "opencode_worker_kimi")]
+    [string]$AgentType = "opencode_worker"
 )
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
+# The worker family: one agent type per OpenCode Go model. The parent stages an
+# assignment for one exact type and spawns that same type; the Hook quarantines
+# a mismatch instead of delivering to the wrong model.
+$agentTypes = @("opencode_worker", "opencode_worker_pro", "opencode_worker_glm", "opencode_worker_kimi")
+# Shared file-prefix family name for the single-slot dispatch state.
 $agentType = "opencode_worker"
+$stagedAgentType = $AgentType
 $stateRoot = if ([string]::IsNullOrWhiteSpace($StateDirectory)) {
     Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "Codex\opencode-plaintext-handoff"
 } else {
@@ -77,7 +86,7 @@ function Test-HandoffEnvelope([object]$Value) {
         return [pscustomobject]@{ Valid = $false; Error = "the handoff envelope has an invalid schema" }
     }
     $envelopeAgentType = Get-JsonProperty $Value "agent_type"
-    if ($envelopeAgentType -isnot [string] -or $envelopeAgentType -ne $agentType) {
+    if ($envelopeAgentType -isnot [string] -or -not ($agentTypes -contains $envelopeAgentType)) {
         return [pscustomobject]@{ Valid = $false; Error = "the handoff envelope has an invalid agent type" }
     }
     $handoffID = Get-JsonProperty $Value "handoff_id"
@@ -278,7 +287,7 @@ function Stage-Locked([string]$Assignment) {
     $handoff = [ordered]@{
         schema = 1
         handoff_id = [Guid]::NewGuid().ToString("D")
-        agent_type = $agentType
+        agent_type = $stagedAgentType
         created_at = $now.ToString("O")
         expires_at = $now.AddSeconds($TtlSeconds).ToString("O")
         assignment = $Assignment
@@ -325,9 +334,16 @@ function Run-TargetHookLocked([object]$HookInput) {
         Stop-Handoff "The pending OpenCode handoff expired before the child started." 6
     }
 
+    $envelopeAgentType = [string](Get-JsonProperty $validation.Value "agent_type")
+    $hookAgentType = [string](Get-JsonProperty $HookInput "agent_type")
+    if ($envelopeAgentType -ne $hookAgentType) {
+        $null = Move-ToQuarantine $claimedPath $agentID
+        Stop-Handoff "The pending OpenCode handoff targets agent type ${envelopeAgentType} but SubagentStart fired for ${hookAgentType}. Quarantined; resolve it before staging another." 7
+    }
+
     $assignment = [string](Get-JsonProperty $validation.Value "assignment")
     $additionalContext = @"
-You are the spawned opencode_worker child, not the root agent. The parent supplied the complete task below through a one-time plaintext handoff because provider-internal collaboration ciphertext is not a reliable cross-provider task carrier. Treat this as the task contract. Do not continue the parent's unrelated work and do not report the assignment missing merely because the encrypted collaboration payload is unreadable.
+You are the spawned ${envelopeAgentType} child, not the root agent. The parent supplied the complete task below through a one-time plaintext handoff because provider-internal collaboration ciphertext is not a reliable cross-provider task carrier. Treat this as the task contract. Do not continue the parent's unrelated work and do not report the assignment missing merely because the encrypted collaboration payload is unreadable.
 
 BEGIN PARENT ASSIGNMENT
 $assignment
@@ -365,7 +381,7 @@ try {
         Write-Json ([ordered]@{
             staged = $true
             handoff_id = $handoff.handoff_id
-            agent_type = $agentType
+            agent_type = $stagedAgentType
             expires_at = $handoff.expires_at
             pending_path = $pendingPath
         })
@@ -387,7 +403,7 @@ try {
     if ($null -eq $hookInput -or $hookInput -is [System.Array]) {
         Stop-Handoff "SubagentStart hook input must be a JSON object." 4
     }
-    if ((Get-JsonProperty $hookInput "hook_event_name") -ne "SubagentStart" -or (Get-JsonProperty $hookInput "agent_type") -ne $agentType) {
+    if ((Get-JsonProperty $hookInput "hook_event_name") -ne "SubagentStart" -or -not ($agentTypes -contains (Get-JsonProperty $hookInput "agent_type"))) {
         exit 0
     }
 

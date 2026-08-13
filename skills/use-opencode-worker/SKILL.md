@@ -5,11 +5,22 @@ description: Use the OpenCode Go-backed opencode_worker through the installed on
 
 # Use OpenCode Worker
 
-## Choose the worker
+## Choose the worker and model
 
-- Use it for bounded, preferably read-only text, code, log, search, extraction,
-  enumeration, or high-volume reading work whose raw material is much larger
-  than the useful conclusion.
+- Use a worker for bounded, preferably read-only text, code, log, search,
+  extraction, enumeration, or high-volume reading work whose raw material is
+  much larger than the useful conclusion.
+- Pick the agent type that matches the task's model needs:
+
+| Agent type | Model | Prefer when |
+| --- | --- | --- |
+| `opencode_worker` | `deepseek-v4-flash` | Default; bounded high-volume reading, extraction, enumeration |
+| `opencode_worker_pro` | `deepseek-v4-pro` | Deeper reasoning in the same model family |
+| `opencode_worker_glm` | `glm-5.2` | Alternative reasoning behavior |
+| `opencode_worker_kimi` | `kimi-k2.7-code` | Code-tuned work |
+
+- Stage and spawn the exact same agent type. The Hook quarantines a staged/spawned
+  type mismatch instead of delivering the assignment to the wrong model.
 - Keep tightly coupled reasoning, consequential decisions, verification, and
   final integration in the parent.
 - Do not send secrets, private source, personal data, or regulated material
@@ -27,16 +38,19 @@ description: Use the OpenCode Go-backed opencode_worker through the installed on
    condition. Keep it in parent-owned execution state; do not publish it as
    user-visible commentary merely for transport.
 2. Pipe the assignment through stdin to the installed handoff script in
-   `stage` mode:
-   - Windows: `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "<codex-home>\hooks\codex-opencode-subagent\plaintext-handoff.ps1" -Mode stage`
-   - macOS/Linux: `python3 "<codex-home>/hooks/codex-opencode-subagent/plaintext_handoff.py" --mode stage`
-3. Require a successful stage result naming `opencode_worker`. Treat a lock
-   contender, active pending or claimed item, quarantined state, or any other
-   non-success result as a transport failure. Never spawn after a failed stage.
+   `stage` mode, naming the exact agent type you will spawn:
+   - Windows: `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "<codex-home>\hooks\codex-opencode-subagent\plaintext-handoff.ps1" -Mode stage -AgentType opencode_worker`
+   - macOS/Linux: `python3 "<codex-home>/hooks/codex-opencode-subagent/plaintext_handoff.py" --mode stage --agent-type opencode_worker`
+   (Use the chosen family type, e.g. `opencode_worker_pro`, in both the stage
+   command and the spawn below.)
+3. Require a successful stage result naming the same agent type you intend to
+   spawn. Treat a lock contender, active pending or claimed item, quarantined
+   state, or any other non-success result as a transport failure. Never spawn
+   after a failed stage.
 4. Immediately create the child through Codex's native `spawn_agent` with the
-   exact agent type `opencode_worker`, a unique task name, and
-   `fork_turns="none"`. Do not replace this with a provider CLI, direct API
-   call, local OpenCode CLI, or inherited root history.
+   exact agent type from the stage result and `fork_turns="none"`. Do not
+   replace this with a provider CLI, direct API call, local OpenCode CLI, or
+   inherited root history.
 5. Receive the child through Codex's native wait/callback path. Use one
    task-sized idle wait or callback; do not short-poll, duplicate the child's
    work, or invent another return transport while it runs.
