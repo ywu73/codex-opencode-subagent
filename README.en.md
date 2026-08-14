@@ -13,21 +13,20 @@ Hook delivers the parent's one-shot plaintext assignment into the child.
 
 One agent type per model; the parent picks per task:
 
-| Agent type | Model |
-| --- | --- |
-| `opencode_worker` | `deepseek-v4-flash` (default) |
-| `opencode_worker_pro` | `deepseek-v4-pro` |
-| `opencode_worker_glm` | `glm-5.2` |
-| `opencode_worker_kimi` | `kimi-k2.7-code` |
+| Agent type | Model | Current routing status |
+| --- | --- | --- |
+| `opencode_worker` | `deepseek-v4-flash` (default) | enabled; Responses probe passed |
+| `opencode_worker_pro` | `deepseek-v4-pro` | enabled; Responses probe passed |
 
 The parent-side routing policy lives in
 [`config/opencode-worker-routing.json`](config/opencode-worker-routing.json).
-The parent should honor an explicit user choice such as `worker: code`,
-`worker: opencode_worker_kimi`, or `model: deepseek-v4-pro` first, then use a
+The parent should honor an explicit enabled choice such as `worker: pro` or
+`model: deepseek-v4-pro` first, then use a
 task profile and finally the configured default. Run
-`node scripts/resolve-worker.mjs --profile code` for a deterministic resolution
+`node scripts/resolve-worker.mjs --profile pro` for a deterministic resolution
 record. The resolved `agent_type` must be used for both staging and native
 spawn; do not silently switch models.
+Profiles whose routing status is not `available` fail closed without fallback.
 
 ## Three-step install
 
@@ -46,12 +45,11 @@ Ask Codex to read and follow
 [prompts/install-with-codex.md](prompts/install-with-codex.md) from this
 repository. The installer adds:
 
-- `<codex-home>/agents/opencode-worker.toml` (plus the `-pro`, `-glm`, and
-  `-kimi` variants)
+- `<codex-home>/agents/opencode-worker.toml` and `opencode-worker-pro.toml`
 - `<codex-home>/skills/use-opencode-worker/`
 - `<codex-home>/hooks/codex-opencode-subagent/plaintext_handoff.py`
 - one `SubagentStart` Hook matching
-  `^(opencode_worker|opencode_worker_pro|opencode_worker_glm|opencode_worker_kimi)$`
+  `^(opencode_worker|opencode_worker_pro)$`
 - a marked `$use-opencode-worker` index in the personal `AGENTS.md`
 
 It does not switch the main model/provider and makes no OpenCode Go call during
@@ -59,13 +57,14 @@ installation.
 
 ### 3. Trust the Hook, then test
 
-1. Enter `/hooks` in Codex and confirm the Hook matches only the four
-   `opencode_worker` family agent types and points to the installed
+1. Enter `/hooks` in Codex and confirm the Hook matches only the two
+   `opencode_worker` agent types and points to the installed
    `plaintext_handoff.py`, then trust it.
 2. Start a new Codex task. A task that was already running is not guaranteed to
    reload the new Hook.
-3. Ask the new task to follow
-   [prompts/quick-smoke-test.md](prompts/quick-smoke-test.md).
+3. Ask the new task to follow the default-worker-only
+   [prompts/quick-smoke-test.md](prompts/quick-smoke-test.md). Use the repository
+   [prompts/smoke-test.md](prompts/smoke-test.md) for per-profile smoke tests.
 
 ## What success looks like
 

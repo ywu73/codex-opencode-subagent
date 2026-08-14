@@ -8,8 +8,8 @@ MCP/plugins, or switching the main task provider.
 
 ## Success criteria
 
-1. The `opencode_worker` family (`opencode_worker`, `opencode_worker_pro`,
-   `opencode_worker_glm`, `opencode_worker_kimi`) is discoverable in a new Codex
+1. The `opencode_worker` family (`opencode_worker`, `opencode_worker_pro`) is
+   discoverable in a new Codex
    task.
 2. A `fork_turns="none"` child receives the complete Hook-delivered assignment.
 3. The child runs as an OpenCode Go session and returns the parent's exact
@@ -35,9 +35,8 @@ Key decisions:
 
 - Each Agent TOML owns `model_provider = "opencode_go"`, its own `model`,
   `base_url`, `wire_api = "responses"`, and `env_key = "OPENCODE_API_KEY"`.
-- One agent type per model: `opencode_worker` (deepseek-v4-flash, default),
-  `opencode_worker_pro` (deepseek-v4-pro), `opencode_worker_glm` (glm-5.2), and
-  `opencode_worker_kimi` (kimi-k2.7-code); the parent picks per task.
+- One agent type per model: `opencode_worker` (deepseek-v4-flash, default) and
+  `opencode_worker_pro` (deepseek-v4-pro); the parent picks per task.
 - `config/opencode-worker-routing.json` is the parent-side selection policy:
   explicit user override, task profile, then default profile. A small resolver
   returns the exact profile, model, and agent type without performing a provider
@@ -74,7 +73,7 @@ Key decisions:
 
 | Risk | Handling |
 | --- | --- |
-| OpenCode Go Responses compatibility | Endpoint is probed; a live smoke is required before claiming full compatibility |
-| Model capability | Default is `deepseek-v4-flash`; pro/glm/kimi variants exist, and adding a model requires full revalidation |
+| OpenCode Go Responses compatibility | Probe and native-smoke status are tracked per model; incompatible profiles fail closed |
+| Model capability | Default is `deepseek-v4-flash`; the Pro variant provides deeper reasoning, and adding another model requires full revalidation |
 | API key management | Only `OPENCODE_API_KEY` is used and never stored in the repository |
 | Windows | The Hook script is ported; macOS/POSIX is the verified baseline |

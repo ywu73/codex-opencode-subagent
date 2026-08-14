@@ -13,10 +13,11 @@ Codex CLI。
 
 ## 为什么可以直接配置
 
-OpenCode Go 暴露了 Codex 支持的 Responses wire API。已用无效模型探测确认
-`https://opencode.ai/zen/go/v1/responses` 端点存在，并返回模型错误而不是
-404/协议错误；`chat/completions` 也存在。Agent TOML 选择 `wire_api =
-"responses"`，与 `codex-deepseek-subagent` 的推荐方向一致。
+Codex custom provider 当前只接受 Responses wire；`wire_api = "chat"` 会使整个
+Agent TOML 在 discovery 阶段被忽略。因此两个 Agent TOML 都使用
+`wire_api = "responses"`。本仓库只保留两个 DeepSeek Agent TOML；OpenCode Go 的
+Responses 探针已确认两个模型均可完成请求。直接 Chat endpoint 成功不能替代 Codex
+native smoke，也不能作为 Chat wire 的兼容依据。
 
 ## 一次任务流程
 
@@ -36,15 +37,13 @@ OpenCode Go 暴露了 Codex 支持的 Responses wire API。已用无效模型探
 | --- | --- | --- |
 | `agents/opencode-worker.toml` | `opencode_worker` | `deepseek-v4-flash` |
 | `agents/opencode-worker-pro.toml` | `opencode_worker_pro` | `deepseek-v4-pro` |
-| `agents/opencode-worker-glm.toml` | `opencode_worker_glm` | `glm-5.2` |
-| `agents/opencode-worker-kimi.toml` | `opencode_worker_kimi` | `kimi-k2.7-code` |
 
 ### 选择配置
 
 `config/opencode-worker-routing.json` 是父 Agent 的选择策略，不替代 Agent
 TOML 的运行时注册。它记录模型的能力标签、成本等级、验证状态、别名和 task
 profile。选择优先级为：用户显式指定的 profile/agent type/model、task profile、
-默认 profile。可用 `node scripts/resolve-worker.mjs --profile code` 查看解析结果。
+默认 profile。可用 `node scripts/resolve-worker.mjs --profile pro` 查看解析结果。
 
 解析结果中的 `agent_type` 必须同时用于 stage 和 native spawn；未知或不可用的
 显式选择直接失败，不允许静默 fallback。
@@ -53,7 +52,7 @@ profile。选择优先级为：用户显式指定的 profile/agent type/model、
 
 - provider: `opencode_go`
 - base_url: `https://opencode.ai/zen/go/v1`
-- wire_api: `responses`
+- wire_api: `responses`（Codex 唯一支持值）
 - env_key: `OPENCODE_API_KEY`
 - sandbox_mode: `read-only`
 - model_context_window: `1000000`
@@ -67,7 +66,7 @@ mutation 默认值，不是防泄漏边界。stage 时用 `--agent-type`（Windo
 
 | 路径 | 用途 |
 | --- | --- |
-| `agents/opencode-worker*.toml` | 四个 Codex custom agent（每模型一个）与 OpenCode Go provider |
+| `agents/opencode-worker*.toml` | 两个 Codex custom agent（每模型一个）与 OpenCode Go provider |
 | `skills/use-opencode-worker/SKILL.md` | 父 Agent 按需加载的委派协议 |
 | `hooks/plaintext_handoff.py` | POSIX stage/Hook 脚本 |
 | `hooks/plaintext-handoff.ps1` | Windows stage/Hook 脚本 |
@@ -88,21 +87,20 @@ Agent registration、`model_provider` 和 `[model_providers.opencode_go]` 只存
 | 层级 | 验证 | 通过条件 |
 | --- | --- | --- |
 | Hook 协议 | `python3 -m unittest tests.test_plaintext_handoff` | 32 项协议测试通过 |
-| 端点 | `curl /responses` with invalid model | 返回模型错误，证明 endpoint 存在 |
+| provider 探针 | 对目标模型调用 `/responses` | 返回兼容的 Response；只证明 provider 边界，不等于 native smoke |
 | 快速 smoke | 新任务执行 `quick-smoke-test.md` | marker、child identity、handoff 消费、OpenCode Go 调用成功 |
 
 ## 已知限制与未来项
 
-- 默认 worker 为 `opencode_worker`（`deepseek-v4-flash`）；OpenCode Go 模型列表
-  还包含 `glm-5.2`、`deepseek-v4-pro`、`kimi-k2.7-code` 等，仓库已为它们提供
-  `opencode_worker_pro` / `opencode_worker_glm` / `opencode_worker_kimi`。
+- 默认 worker 为 `opencode_worker`（`deepseek-v4-flash`）；仓库还提供
+  `deepseek-v4-pro` 的独立 agent 定义。
   新增模型 = 新增一个独立 Agent TOML，并把 agent type、skill、安装 prompt、
   文档和 smoke oracle 作为一个整体重验；已安装环境的 Hook matcher 与
   `scripts/validate-installation.mjs` 也要同步。
 - Hook 会 quarantine staged/spawned agent type 不匹配的交付（退出码 7），
   不会把任务送给错误的模型。
-- OpenCode Go Responses 实现可能只部分实现某些请求字段。实际能力以 live smoke
-  和当前官方兼容表为准。
+- OpenCode Go Responses 转换按模型存在差异。路由层必须保留逐模型 probe 与 live
+  smoke 状态；不能从某一个模型或 Chat endpoint 的成功推断其他模型兼容。
 - Windows Hook 脚本是从 deepseek 仓库移植的，当前仓库只在本机 macOS/POSIX
   验证。
 

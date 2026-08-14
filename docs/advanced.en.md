@@ -12,14 +12,16 @@ plugin, MCP server, wrapper, daemon, or another Codex CLI.
 
 ## Why direct provider configuration works
 
-OpenCode Go exposes the Responses wire API used by Codex. The `agents/opencode-worker*.toml` files define the worker family, one agent type per model:
+Codex custom providers currently accept only the Responses wire. Setting
+`wire_api = "chat"` makes Codex ignore the Agent TOML during discovery, so both
+DeepSeek Agent TOMLs use `wire_api = "responses"`. Current probes completed for
+both retained models. A direct Chat endpoint success is not a substitute for a
+native Codex smoke.
 
 | Agent file | Agent type | Model |
 | --- | --- | --- |
 | `agents/opencode-worker.toml` | `opencode_worker` | `deepseek-v4-flash` |
 | `agents/opencode-worker-pro.toml` | `opencode_worker_pro` | `deepseek-v4-pro` |
-| `agents/opencode-worker-glm.toml` | `opencode_worker_glm` | `glm-5.2` |
-| `agents/opencode-worker-kimi.toml` | `opencode_worker_kimi` | `kimi-k2.7-code` |
 
 ### Selection policy
 
@@ -27,7 +29,7 @@ OpenCode Go exposes the Responses wire API used by Codex. The `agents/opencode-w
 not replace Agent TOML runtime registration. It records capability tags, cost
 class, validation status, aliases, and task profiles. Selection precedence is an
 explicit user profile/agent type/model, then a task profile, then the default
-profile. Run `node scripts/resolve-worker.mjs --profile code` to inspect a
+profile. Run `node scripts/resolve-worker.mjs --profile pro` to inspect a
 deterministic resolution.
 
 The resolved `agent_type` must be used for both staging and native spawn. Unknown
@@ -37,7 +39,7 @@ Every worker shares:
 
 - provider: `opencode_go`
 - base_url: `https://opencode.ai/zen/go/v1`
-- wire_api: `responses`
+- wire_api: `responses` (the only Codex-supported value)
 - env_key: `OPENCODE_API_KEY`
 - sandbox_mode: `read-only`
 - model_context_window: `1000000`
@@ -64,7 +66,7 @@ instead of delivering the assignment to the wrong model.
 
 | Path | Purpose |
 | --- | --- |
-| `agents/opencode-worker*.toml` | Four custom agents (one per model) and the OpenCode Go provider |
+| `agents/opencode-worker*.toml` | Two custom agents (one per model) and the OpenCode Go provider |
 | `skills/use-opencode-worker/SKILL.md` | Parent-side delegation protocol |
 | `hooks/plaintext_handoff.py` | POSIX stage/Hook script |
 | `hooks/plaintext-handoff.ps1` | Windows stage/Hook script |
@@ -80,23 +82,22 @@ instead of delivering the assignment to the wrong model.
 | Layer | Validation | Pass condition |
 | --- | --- | --- |
 | Hook protocol | `python3 -m unittest tests.test_plaintext_handoff` | 32 protocol tests pass |
-| Endpoint | `curl /responses` with an invalid model | Returns a model error, proving the endpoint exists |
+| Provider probe | Call `/responses` for the selected model | Returns a compatible Response; this does not replace native smoke |
 | Quick smoke | New task follows `quick-smoke-test.md` | Marker, child identity, handoff consumption, and OpenCode Go call succeed |
 
 ## Known limits
 
-- The default worker is `opencode_worker` (`deepseek-v4-flash`); OpenCode Go also
-  exposes models such as `glm-5.2`, `deepseek-v4-pro`, and `kimi-k2.7-code`, for
-  which this repository ships `opencode_worker_pro`, `opencode_worker_glm`, and
-  `opencode_worker_kimi`. Adding a model means adding one standalone Agent TOML
+- The default worker is `opencode_worker` (`deepseek-v4-flash`); this repository
+  also ships a standalone worker for `deepseek-v4-pro`.
+  Adding a model means adding one standalone Agent TOML
   and revalidating the agent, skill, install prompt, docs, and smoke oracle as
   one set; installed environments must also sync the Hook matcher and
   `scripts/validate-installation.mjs`.
 - The Hook quarantines a staged/spawned agent type mismatch (exit code 7)
   instead of delivering the assignment to the wrong model.
-- OpenCode Go's Responses implementation may only partially implement some
-  request fields. Validate against a live smoke and the current compatibility
-  table.
+- OpenCode Go Responses translation varies by model. Keep per-model probe and
+  native-smoke status; never infer another model's compatibility from one model
+  or a successful Chat endpoint request.
 - The Windows Hook script is ported from the DeepSeek repository and is not
   live-validated on Windows here.
 

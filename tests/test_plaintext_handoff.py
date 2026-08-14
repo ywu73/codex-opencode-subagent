@@ -41,8 +41,6 @@ AGENT_TYPE = "opencode_worker"
 AGENT_TYPES = (
     "opencode_worker",
     "opencode_worker_pro",
-    "opencode_worker_glm",
-    "opencode_worker_kimi",
 )
 
 

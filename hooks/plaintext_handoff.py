@@ -23,8 +23,6 @@ else:
 AGENT_TYPES = (
     "opencode_worker",
     "opencode_worker_pro",
-    "opencode_worker_glm",
-    "opencode_worker_kimi",
 )
 DEFAULT_AGENT_TYPE = "opencode_worker"
 # Shared file-prefix family name for the single-slot dispatch state.

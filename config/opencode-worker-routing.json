@@ -12,15 +12,11 @@
     "default": "fast_read",
     "flash": "fast_read",
     "pro": "deep_reasoning",
-    "deep": "deep_reasoning",
-    "glm": "alternative_reasoning",
-    "kimi": "code"
+    "deep": "deep_reasoning"
   },
   "task_profiles": {
     "bulk_reading": "fast_read",
-    "deep_reasoning": "deep_reasoning",
-    "alternative_reasoning": "alternative_reasoning",
-    "code": "code"
+    "deep_reasoning": "deep_reasoning"
   },
   "workers": {
     "fast_read": {
@@ -29,12 +25,14 @@
       "model_provider": "opencode_go",
       "base_url": "https://opencode.ai/zen/go/v1",
       "wire_api": "responses",
+      "model_context_window": 1000000,
       "strengths": ["fast", "bulk-reading", "extraction", "enumeration"],
       "avoid": ["deep-architecture-decisions"],
       "cost_class": "low",
       "status": "available",
       "validation": {
         "protocol": "verified",
+        "provider_responses_probe": "verified",
         "live_smoke": "verified"
       }
     },
@@ -44,43 +42,15 @@
       "model_provider": "opencode_go",
       "base_url": "https://opencode.ai/zen/go/v1",
       "wire_api": "responses",
+      "model_context_window": 1000000,
       "strengths": ["deep-reasoning", "complex-analysis", "architecture-review"],
       "avoid": ["latency-sensitive-bulk-reading"],
       "cost_class": "medium",
       "status": "available",
       "validation": {
         "protocol": "verified",
-        "live_smoke": "not-run"
-      }
-    },
-    "alternative_reasoning": {
-      "agent_type": "opencode_worker_glm",
-      "model": "glm-5.2",
-      "model_provider": "opencode_go",
-      "base_url": "https://opencode.ai/zen/go/v1",
-      "wire_api": "responses",
-      "strengths": ["alternative-reasoning", "independent-review", "comparison"],
-      "avoid": ["unverified-provider-specific-assumptions"],
-      "cost_class": "medium",
-      "status": "available",
-      "validation": {
-        "protocol": "verified",
-        "live_smoke": "not-run"
-      }
-    },
-    "code": {
-      "agent_type": "opencode_worker_kimi",
-      "model": "kimi-k2.7-code",
-      "model_provider": "opencode_go",
-      "base_url": "https://opencode.ai/zen/go/v1",
-      "wire_api": "responses",
-      "strengths": ["code", "repository-analysis", "implementation-reading"],
-      "avoid": ["unverified-domain-judgments"],
-      "cost_class": "medium",
-      "status": "available",
-      "validation": {
-        "protocol": "verified",
-        "live_smoke": "not-run"
+        "provider_responses_probe": "verified",
+        "live_smoke": "verified"
       }
     }
   }

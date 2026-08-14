@@ -55,6 +55,14 @@ function assertWorkerProfile(profileName, worker) {
       fail(`Worker profile ${profileName} has an invalid ${field}.`);
     }
   }
+  if (!Number.isSafeInteger(worker.model_context_window) || worker.model_context_window <= 0) {
+    fail(`Worker profile ${profileName} has an invalid model_context_window.`);
+  }
+  if (worker.wire_api !== "responses") {
+    fail(
+      `Worker profile ${profileName} has unsupported wire API ${worker.wire_api}; Codex requires responses.`,
+    );
+  }
   for (const field of ["strengths", "avoid"]) {
     if (
       !Array.isArray(worker[field]) ||
@@ -173,8 +181,10 @@ export function resolveSelection(config, request = {}) {
   }
 
   const worker = config.workers[profile];
-  if (worker.status === "disabled") {
-    fail(`Worker profile ${profile} is disabled; refusing silent fallback.`);
+  if (worker.status !== "available") {
+    fail(
+      `Worker profile ${profile} is unavailable (status=${worker.status}); refusing silent fallback.`,
+    );
   }
   return {
     selected_profile: profile,
@@ -183,6 +193,7 @@ export function resolveSelection(config, request = {}) {
     model_provider: worker.model_provider,
     base_url: worker.base_url,
     wire_api: worker.wire_api,
+    model_context_window: worker.model_context_window,
     strengths: worker.strengths,
     avoid: worker.avoid,
     cost_class: worker.cost_class,

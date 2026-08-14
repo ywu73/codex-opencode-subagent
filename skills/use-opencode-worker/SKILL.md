@@ -11,11 +11,13 @@ description: Use the OpenCode Go-backed opencode_worker through the installed on
   extraction, enumeration, or high-volume reading work whose raw material is
   much larger than the useful conclusion.
 - Read `config/opencode-worker-routing.json` from the current workspace before
-  choosing a worker. It is the parent-side routing policy; the Agent TOMLs and
-  Hook remain the runtime registration and delivery contract.
+  choosing a worker when that file exists. It is the parent-side routing policy;
+  the Agent TOMLs and Hook remain the runtime registration and delivery contract.
+  If the routing file is absent, the checkout-free quick smoke may select only
+  the exact default `opencode_worker`; do not infer or select another profile.
 - Resolve the worker in this order:
-  1. Respect an explicit user override such as `worker: code`,
-     `worker: opencode_worker_kimi`, or `model: deepseek-v4-pro`.
+  1. Respect an explicit enabled user override such as `worker: pro` or
+     `model: deepseek-v4-pro`.
   2. Otherwise use the task profile from the routing config.
   3. Otherwise use the config's `default_profile`.
 - Use `node scripts/resolve-worker.mjs --profile <name>` when a deterministic
@@ -23,12 +25,10 @@ description: Use the OpenCode Go-backed opencode_worker through the installed on
   the returned `agent_type` is the value that must be staged and spawned.
 - Pick the agent type that matches the task's model needs:
 
-| Agent type | Model | Prefer when |
+| Agent type | Model | Routing status / use |
 | --- | --- | --- |
-| `opencode_worker` | `deepseek-v4-flash` | Default; bounded high-volume reading, extraction, enumeration |
-| `opencode_worker_pro` | `deepseek-v4-pro` | Deeper reasoning in the same model family |
-| `opencode_worker_glm` | `glm-5.2` | Alternative reasoning behavior |
-| `opencode_worker_kimi` | `kimi-k2.7-code` | Code-tuned work |
+| `opencode_worker` | `deepseek-v4-flash` | Available default; bounded reading and extraction |
+| `opencode_worker_pro` | `deepseek-v4-pro` | Available; deeper reasoning |
 
 - Stage and spawn the exact same agent type. The Hook quarantines a staged/spawned
   type mismatch instead of delivering the assignment to the wrong model.

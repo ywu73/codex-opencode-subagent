@@ -3,7 +3,7 @@
   "hooks": {
     "SubagentStart": [
       {
-        "matcher": "^(opencode_worker|opencode_worker_pro|opencode_worker_glm|opencode_worker_kimi)$",
+        "matcher": "^(opencode_worker|opencode_worker_pro)$",
         "hooks": [
           {
             "type": "command",

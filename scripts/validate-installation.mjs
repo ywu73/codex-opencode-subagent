@@ -5,6 +5,25 @@ import os from "node:os";
 import path from "node:path";
 import { loadRoutingConfig } from "./resolve-worker.mjs";
 
+function stringAssignments(text, key) {
+  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return [...text.matchAll(new RegExp(`^${escapedKey}\\s*=\\s*"([^"]*)"\\s*$`, "gm"))]
+    .map((match) => match[1]);
+}
+
+function integerAssignments(text, key) {
+  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return [...text.matchAll(new RegExp(`^${escapedKey}\\s*=\\s*(\\d+)\\s*$`, "gm"))]
+    .map((match) => Number(match[1]));
+}
+
+function hasExactAssignment(text, key, expected) {
+  const values = typeof expected === "number"
+    ? integerAssignments(text, key)
+    : stringAssignments(text, key);
+  return values.length === 1 && values[0] === expected;
+}
+
 const codexHome = process.env.CODEX_HOME || path.join(os.homedir(), ".codex");
 const checks = {
   opencode_api_key_present: Boolean(process.env.OPENCODE_API_KEY),
@@ -17,23 +36,22 @@ const checks = {
 
 try {
   const agentFiles = [
-    ["opencode-worker.toml", "opencode_worker", "deepseek-v4-flash"],
-    ["opencode-worker-pro.toml", "opencode_worker_pro", "deepseek-v4-pro"],
-    ["opencode-worker-glm.toml", "opencode_worker_glm", "glm-5.2"],
-    ["opencode-worker-kimi.toml", "opencode_worker_kimi", "kimi-k2.7-code"],
+    ["opencode-worker.toml", "opencode_worker", "deepseek-v4-flash", 1000000],
+    ["opencode-worker-pro.toml", "opencode_worker_pro", "deepseek-v4-pro", 1000000],
   ];
-  for (const [fileName, agentName, model] of agentFiles) {
+  for (const [fileName, agentName, model, contextWindow] of agentFiles) {
     const agent = readFileSync(path.join(codexHome, "agents", fileName), "utf8");
-    if (!agent.includes(agentName)) {
+    if (stringAssignments(agent, "name")[0] !== agentName) {
       checks.agents_installed = false;
     }
     if (
       !(
-        agent.includes('model_provider = "opencode_go"') &&
-        agent.includes(`model = "${model}"`) &&
-        agent.includes('base_url = "https://opencode.ai/zen/go/v1"') &&
-        agent.includes('wire_api = "responses"') &&
-        agent.includes('env_key = "OPENCODE_API_KEY"')
+        hasExactAssignment(agent, "model_provider", "opencode_go") &&
+        hasExactAssignment(agent, "model", model) &&
+        hasExactAssignment(agent, "model_context_window", contextWindow) &&
+        hasExactAssignment(agent, "base_url", "https://opencode.ai/zen/go/v1") &&
+        hasExactAssignment(agent, "wire_api", "responses") &&
+        hasExactAssignment(agent, "env_key", "OPENCODE_API_KEY")
       )
     ) {
       checks.agent_provider_configured = false;
@@ -48,17 +66,21 @@ try {
 
   const routing = loadRoutingConfig();
   const expectedRouting = [
-    ["fast_read", "opencode_worker", "deepseek-v4-flash"],
-    ["deep_reasoning", "opencode_worker_pro", "deepseek-v4-pro"],
-    ["alternative_reasoning", "opencode_worker_glm", "glm-5.2"],
-    ["code", "opencode_worker_kimi", "kimi-k2.7-code"],
+    ["fast_read", "opencode_worker", "deepseek-v4-flash", 1000000, "responses"],
+    ["deep_reasoning", "opencode_worker_pro", "deepseek-v4-pro", 1000000, "responses"],
   ];
   if (routing.default_profile !== "fast_read") {
     checks.routing_config_matches_agents = false;
   }
-  for (const [profile, agentName, model] of expectedRouting) {
+  for (const [profile, agentName, model, contextWindow, wireApi] of expectedRouting) {
     const worker = routing.workers[profile];
-    if (!worker || worker.agent_type !== agentName || worker.model !== model) {
+    if (
+      !worker ||
+      worker.agent_type !== agentName ||
+      worker.model !== model ||
+      worker.model_context_window !== contextWindow ||
+      worker.wire_api !== wireApi
+    ) {
       checks.routing_config_matches_agents = false;
     }
   }
@@ -84,23 +106,42 @@ try {
   }
   checks.hook_registered =
     hooksText.includes(
-      "^(opencode_worker|opencode_worker_pro|opencode_worker_glm|opencode_worker_kimi)$",
+      "^(opencode_worker|opencode_worker_pro)$",
     ) && hooksText.includes("plaintext_handoff.py");
 } catch (error) {
   checks.install_checks_failed = error.message;
 }
 
-const ready = Object.entries(checks).every(([, value]) => value === true);
+const installationReady = Object.entries(checks).every(([, value]) => value === true);
+let liveSmokeComplete = false;
+let unverifiedWorkers = [];
+try {
+  const routing = loadRoutingConfig();
+  unverifiedWorkers = Object.values(routing.workers)
+    .filter((worker) => worker.validation?.live_smoke !== "verified")
+    .map((worker) => worker.agent_type);
+  liveSmokeComplete = unverifiedWorkers.length === 0;
+} catch {
+  // A routing parse failure is already represented in the installation checks.
+}
+const status = !installationReady
+  ? "failed"
+  : liveSmokeComplete
+    ? "ready"
+    : "installed-unverified";
 process.stdout.write(
   `${JSON.stringify(
     {
-      status: ready ? "ready" : "failed",
+      status,
       codex_home: codexHome,
       checks,
-      new_thread_required: ready,
+      installation_ready: installationReady,
+      live_smoke_complete: liveSmokeComplete,
+      unverified_workers: unverifiedWorkers,
+      new_thread_required: installationReady,
     },
     null,
     2,
   )}\n`,
 );
-if (!ready) process.exitCode = 1;
+if (!installationReady) process.exitCode = 1;

@@ -8,21 +8,26 @@ request.
 Test the installed OpenCode Go subagent through the recommended native Hook
 path. Do not ask me for an API key or display its value.
 
-1. Load $use-opencode-worker. In parent-owned execution state, generate a fresh
+1. Load $use-opencode-worker. This checkout-free smoke tests only the installed
+   default worker: retain the exact value `opencode_worker` as
+   `selected_agent_type` for the whole test. Use the repository smoke prompt
+   instead when testing another profile. In parent-owned execution state,
+   generate a fresh
    unpredictable marker and build one child assignment: return exactly two
    lines, `marker=<the marker>` and `arithmetic=<the result of 17 * 19>`. Do not
    put the marker or assignment in commentary, a file, inherited turns, or the
    spawn message.
-2. Stage that assignment through the installed plaintext handoff script:
-   python3 "<codex-home>/hooks/codex-opencode-subagent/plaintext_handoff.py" --mode stage
-   (To smoke a different worker model instead, add --agent-type opencode_worker_pro,
-   opencode_worker_glm, or opencode_worker_kimi and spawn that exact type in step 3.)
-3. Spawn the exact agent type opencode_worker with a unique task name and
+2. Stage that assignment through the installed plaintext handoff script with
+   the retained type:
+   python3 "<codex-home>/hooks/codex-opencode-subagent/plaintext_handoff.py" --mode stage --agent-type <selected_agent_type>
+   Require a successful JSON result whose agent type is <selected_agent_type>.
+3. Spawn the exact agent type <selected_agent_type> with a unique task name and
    fork_turns="none". Do not set a token budget or reasoning-effort restriction.
 4. Use one native task-sized idle wait or callback. Do not short-poll, send a
    follow-up, retry through another transport, or calculate a substitute answer
    in the parent.
-5. Pass only if a distinct opencode_worker child returns the exact fresh marker
+5. Pass only if a distinct child whose agent type is <selected_agent_type>
+   returns the exact fresh marker
    once and `arithmetic=323`, the pending handoff is consumed, and the parent
    model/provider configuration remains unchanged.
 

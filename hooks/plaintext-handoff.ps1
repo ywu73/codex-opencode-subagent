@@ -8,7 +8,7 @@ param(
 
     [string]$StateDirectory,
 
-    [ValidateSet("opencode_worker", "opencode_worker_pro", "opencode_worker_glm", "opencode_worker_kimi")]
+    [ValidateSet("opencode_worker", "opencode_worker_pro")]
     [string]$AgentType = "opencode_worker"
 )
 
@@ -18,7 +18,7 @@ Set-StrictMode -Version Latest
 # The worker family: one agent type per OpenCode Go model. The parent stages an
 # assignment for one exact type and spawns that same type; the Hook quarantines
 # a mismatch instead of delivering to the wrong model.
-$agentTypes = @("opencode_worker", "opencode_worker_pro", "opencode_worker_glm", "opencode_worker_kimi")
+$agentTypes = @("opencode_worker", "opencode_worker_pro")
 # Shared file-prefix family name for the single-slot dispatch state.
 $agentType = "opencode_worker"
 $stagedAgentType = $AgentType

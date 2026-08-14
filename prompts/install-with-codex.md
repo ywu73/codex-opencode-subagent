@@ -6,8 +6,8 @@ skill, and the one-shot plaintext task Hook while preserving the current
 main-agent model and provider.
 
 ```text
-Install the native opencode_worker custom subagent family (opencode_worker,
-opencode_worker_pro, opencode_worker_glm, opencode_worker_kimi) from this
+Install the native opencode_worker custom subagent family (opencode_worker and
+opencode_worker_pro) from this
 repository into my personal Codex configuration. Use the repository checkout as
 the source.
 
@@ -41,15 +41,13 @@ Procedure:
    <codex-home>/hooks/codex-opencode-subagent before changing anything. Preserve
    unrelated configuration. If an existing agent, skill, or Hook at the intended
    identity serves a different purpose, stop and report the conflict.
-3. Install exactly these four agent files from the repository checkout:
+3. Install exactly these two agent files from the repository checkout:
    <codex-home>/agents/opencode-worker.toml (opencode_worker,
    deepseek-v4-flash),
    <codex-home>/agents/opencode-worker-pro.toml (opencode_worker_pro,
-   deepseek-v4-pro),
-   <codex-home>/agents/opencode-worker-glm.toml (opencode_worker_glm,
-   glm-5.2), and
-   <codex-home>/agents/opencode-worker-kimi.toml (opencode_worker_kimi,
-   kimi-k2.7-code).
+   deepseek-v4-pro). Remove the legacy opencode-worker-glm.toml,
+   opencode-worker-glm-51.toml, opencode-worker-kimi.toml, and
+   opencode-worker-mimo.toml files when they match those former agent identities.
 4. Install skills/use-opencode-worker including its SKILL.md.
 5. Install the platform handoff script under
    <codex-home>/hooks/codex-opencode-subagent:
@@ -59,7 +57,7 @@ Procedure:
    path cannot be installed instead of silently making inherited turns the
    default.
 6. Install one SubagentStart command Hook whose matcher is exactly
-   ^(opencode_worker|opencode_worker_pro|opencode_worker_glm|opencode_worker_kimi)$,
+   ^(opencode_worker|opencode_worker_pro)$,
    whose timeout is 10 seconds, whose
    additionalContextLimit is 0, and whose command invokes the absolute path of
    the installed platform handoff script in hook mode. Use the corresponding
@@ -72,11 +70,11 @@ Procedure:
    block and confirm that it tells the parent to load $use-opencode-worker
    before spawning, continuing, or troubleshooting the role.
 8. Parse each installed agent file with a real TOML parser. Confirm that the
-   four files name opencode_worker, opencode_worker_pro, opencode_worker_glm,
-   and opencode_worker_kimi respectively, select model_provider opencode_go and
-   respectively the models deepseek-v4-flash, deepseek-v4-pro, glm-5.2, and
-   kimi-k2.7-code, use the Responses wire API, declare a 1000000-token
-   model context window, default
+   two files name opencode_worker and opencode_worker_pro respectively, select
+   model_provider opencode_go and respectively the models deepseek-v4-flash and
+   deepseek-v4-pro, use the Responses wire API (the only Codex-supported value),
+   declare the model-specific
+   context windows from the repository config, default
    to read-only, contain no model_reasoning_effort, each contain their own
    [model_providers.opencode_go] definition, and contain no plaintext
    credential. Confirm that the top-level config.toml did not gain any
@@ -92,7 +90,8 @@ Procedure:
     value. On Windows check the user scope used by the installed auth command.
 11. Read back the installed configuration with credential-like text redacted,
     then report changed paths, validation performed, whether the key is present,
-    and that the Hook is not runnable until I review its exact definition in
+    and distinguish `installed-unverified` from fully live-verified status.
+    Report that the Hook is not runnable until I review its exact definition in
     /hooks. Do not bypass Hook trust. After I trust it, start a new Codex task
     before the paid smoke so that both the final Hook definition and custom-agent
     configuration are loaded together. Point me to prompts/quick-smoke-test.md

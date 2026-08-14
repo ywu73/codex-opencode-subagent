@@ -13,19 +13,18 @@ assignment 注入 child。
 
 每个模型一个 agent type，父 Agent 按任务选择：
 
-| Agent type | 模型 |
-| --- | --- |
-| `opencode_worker` | `deepseek-v4-flash`（默认） |
-| `opencode_worker_pro` | `deepseek-v4-pro` |
-| `opencode_worker_glm` | `glm-5.2` |
-| `opencode_worker_kimi` | `kimi-k2.7-code` |
+| Agent type | 模型 | 当前路由状态 |
+| --- | --- | --- |
+| `opencode_worker` | `deepseek-v4-flash`（默认） | enabled；Responses 探针通过 |
+| `opencode_worker_pro` | `deepseek-v4-pro` | enabled；Responses 探针通过 |
 
 模型选择策略位于 [config/opencode-worker-routing.json](config/opencode-worker-routing.json)。
-主 Agent 应优先尊重用户的显式选择，例如 `worker: code`、
-`worker: opencode_worker_kimi` 或 `model: deepseek-v4-pro`；没有显式选择时，
+主 Agent 应优先尊重用户的显式选择，例如 `worker: pro` 或
+`model: deepseek-v4-pro`；没有显式选择时，
 再按 task profile 和默认 profile 选择。可用
-`node scripts/resolve-worker.mjs --profile code` 查看确定性解析结果。
+`node scripts/resolve-worker.mjs --profile pro` 查看确定性解析结果。
 解析出的 `agent_type` 必须同时用于 stage 和 native spawn，不能静默切换到其他模型。
+路由状态不是 `available` 的 profile 会直接失败，不能静默回退。
 
 ## 三步安装
 
@@ -42,21 +41,22 @@ shell 中设置；Windows 在用户环境变量中新建 `OPENCODE_API_KEY`。
 把 [prompts/install-with-codex.md](prompts/install-with-codex.md) 交给 Codex
 执行。安装会新增：
 
-- `<codex-home>/agents/opencode-worker.toml`（以及 `-pro`、`-glm`、`-kimi` 三个变体）
+- `<codex-home>/agents/opencode-worker.toml` 和 `opencode-worker-pro.toml`
 - `<codex-home>/skills/use-opencode-worker/`
 - `<codex-home>/hooks/codex-opencode-subagent/plaintext_handoff.py`
 - 一条 `SubagentStart` Hook，matcher 为
-  `^(opencode_worker|opencode_worker_pro|opencode_worker_glm|opencode_worker_kimi)$`
+  `^(opencode_worker|opencode_worker_pro)$`
 - 个人 `AGENTS.md` 中带 marker 的 `$use-opencode-worker` 索引
 
 它不会切换主模型/provider，也不会在安装阶段调用 OpenCode Go。
 
 ### 3. 信任 Hook 并测试
 
-1. 在 Codex 输入 `/hooks`，确认它只匹配 `opencode_worker` 系列四个 agent type，
+1. 在 Codex 输入 `/hooks`，确认它只匹配两个 `opencode_worker` agent type，
    命令指向刚安装的 `plaintext_handoff.py`，然后信任。
 2. 新开一个 Codex 任务。
-3. 把 [prompts/quick-smoke-test.md](prompts/quick-smoke-test.md) 交给新任务。
+3. 把只验证默认 worker 的 [prompts/quick-smoke-test.md](prompts/quick-smoke-test.md)
+   交给新任务；逐模型验证使用仓库内 [prompts/smoke-test.md](prompts/smoke-test.md)。
 
 ## 怎样算成功
 
@@ -70,7 +70,7 @@ shell 中设置；Windows 在用户环境变量中新建 `OPENCODE_API_KEY`。
 
 ## 文件边界
 
-- `agents/opencode-worker*.toml`：child provider 只存在于这四个独立 Agent 文件。
+- `agents/opencode-worker*.toml`：child provider 只存在于这两个独立 Agent 文件。
 - `skills/use-opencode-worker/SKILL.md`：父 Agent 按需加载的委派协议。
 - `hooks/plaintext_handoff.py`：stage 与 `SubagentStart` Hook。
 - `snippets/AGENTS.md`：父 Agent skill 索引。
@@ -82,6 +82,7 @@ shell 中设置；Windows 在用户环境变量中新建 `OPENCODE_API_KEY`。
 
 ```sh
 python3 -m unittest tests.test_plaintext_handoff
+node --test tests/test_resolve_worker.mjs tests/test_smoke_prompts.mjs tests/test_validate_installation.mjs
 ```
 
 MIT。

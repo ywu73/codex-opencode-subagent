@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   loadRoutingConfig,
   resolveSelection,
+  validateRoutingConfig,
 } from "../scripts/resolve-worker.mjs";
 
 const config = loadRoutingConfig();
@@ -14,6 +15,7 @@ test("defaults to the configured fast reading worker", () => {
   assert.equal(result.selected_profile, "fast_read");
   assert.equal(result.agent_type, "opencode_worker");
   assert.equal(result.model, "deepseek-v4-flash");
+  assert.equal(result.wire_api, "responses");
   assert.equal(result.selection_source, "default_profile");
 });
 
@@ -25,32 +27,33 @@ test("resolves an explicit profile alias", () => {
   assert.equal(result.selection_source, "explicit_profile");
 });
 
-test("resolves an exact agent type", () => {
-  const result = resolveSelection(config, { agent_type: "opencode_worker_kimi" });
-
-  assert.equal(result.selected_profile, "code");
-  assert.equal(result.model, "kimi-k2.7-code");
-  assert.equal(result.selection_source, "explicit_agent_type");
-});
-
 test("resolves an exact model id", () => {
-  const result = resolveSelection(config, { model: "glm-5.2" });
+  const result = resolveSelection(config, { model: "deepseek-v4-pro" });
 
-  assert.equal(result.selected_profile, "alternative_reasoning");
-  assert.equal(result.agent_type, "opencode_worker_glm");
+  assert.equal(result.selected_profile, "deep_reasoning");
+  assert.equal(result.agent_type, "opencode_worker_pro");
   assert.equal(result.selection_source, "explicit_model");
 });
 
-test("resolves a task profile", () => {
-  const result = resolveSelection(config, { task: "code" });
+test("uses the Codex-supported Responses wire for every configured model", () => {
+  for (const worker of Object.values(config.workers)) {
+    assert.equal(worker.wire_api, "responses");
+  }
+});
 
-  assert.equal(result.selected_profile, "code");
-  assert.equal(result.selection_source, "task_profile");
+test("rejects a routing config that names an unsupported wire API", () => {
+  const invalid = structuredClone(config);
+  invalid.workers.fast_read.wire_api = "chat";
+
+  assert.throws(
+    () => validateRoutingConfig(invalid),
+    /unsupported wire API/,
+  );
 });
 
 test("rejects conflicting selectors instead of guessing", () => {
   assert.throws(
-    () => resolveSelection(config, { profile: "pro", model: "glm-5.2" }),
+    () => resolveSelection(config, { profile: "pro", model: "deepseek-v4-pro" }),
     /Choose only one selector/,
   );
 });
