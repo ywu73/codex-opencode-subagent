@@ -3,6 +3,7 @@
 import { readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { loadRoutingConfig } from "./resolve-worker.mjs";
 
 const codexHome = process.env.CODEX_HOME || path.join(os.homedir(), ".codex");
 const checks = {
@@ -10,6 +11,8 @@ const checks = {
   agents_installed: true,
   agent_provider_configured: true,
   agent_no_plaintext_key: true,
+  routing_config_valid: true,
+  routing_config_matches_agents: true,
 };
 
 try {
@@ -43,6 +46,23 @@ try {
     }
   }
 
+  const routing = loadRoutingConfig();
+  const expectedRouting = [
+    ["fast_read", "opencode_worker", "deepseek-v4-flash"],
+    ["deep_reasoning", "opencode_worker_pro", "deepseek-v4-pro"],
+    ["alternative_reasoning", "opencode_worker_glm", "glm-5.2"],
+    ["code", "opencode_worker_kimi", "kimi-k2.7-code"],
+  ];
+  if (routing.default_profile !== "fast_read") {
+    checks.routing_config_matches_agents = false;
+  }
+  for (const [profile, agentName, model] of expectedRouting) {
+    const worker = routing.workers[profile];
+    if (!worker || worker.agent_type !== agentName || worker.model !== model) {
+      checks.routing_config_matches_agents = false;
+    }
+  }
+
   const skillPath = path.join(codexHome, "skills", "use-opencode-worker", "SKILL.md");
   const skill = readFileSync(skillPath, "utf8");
   checks.skill_installed = skill.includes("use-opencode-worker");
@@ -70,7 +90,7 @@ try {
   checks.install_checks_failed = error.message;
 }
 
-const ready = Object.values(checks).every(Boolean);
+const ready = Object.entries(checks).every(([, value]) => value === true);
 process.stdout.write(
   `${JSON.stringify(
     {

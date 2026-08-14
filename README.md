@@ -20,6 +20,13 @@ assignment 注入 child。
 | `opencode_worker_glm` | `glm-5.2` |
 | `opencode_worker_kimi` | `kimi-k2.7-code` |
 
+模型选择策略位于 [config/opencode-worker-routing.json](config/opencode-worker-routing.json)。
+主 Agent 应优先尊重用户的显式选择，例如 `worker: code`、
+`worker: opencode_worker_kimi` 或 `model: deepseek-v4-pro`；没有显式选择时，
+再按 task profile 和默认 profile 选择。可用
+`node scripts/resolve-worker.mjs --profile code` 查看确定性解析结果。
+解析出的 `agent_type` 必须同时用于 stage 和 native spawn，不能静默切换到其他模型。
+
 ## 三步安装
 
 ### 1. 设置 OpenCode API key

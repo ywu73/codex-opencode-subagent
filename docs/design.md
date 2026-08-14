@@ -38,6 +38,10 @@ Key decisions:
 - One agent type per model: `opencode_worker` (deepseek-v4-flash, default),
   `opencode_worker_pro` (deepseek-v4-pro), `opencode_worker_glm` (glm-5.2), and
   `opencode_worker_kimi` (kimi-k2.7-code); the parent picks per task.
+- `config/opencode-worker-routing.json` is the parent-side selection policy:
+  explicit user override, task profile, then default profile. A small resolver
+  returns the exact profile, model, and agent type without performing a provider
+  call.
 - The plaintext Hook protocol is reused from `codex-deepseek-subagent`; the Hook
   quarantines a staged/spawned agent type mismatch instead of delivering the
   assignment to the wrong model.
@@ -49,6 +53,8 @@ Key decisions:
 | Path | Purpose |
 | --- | --- |
 | `agents/opencode-worker*.toml` | Codex custom agents (one per model) and the OpenCode Go provider |
+| `config/opencode-worker-routing.json` | Model capability tags, aliases, task profiles, and selection defaults |
+| `scripts/resolve-worker.mjs` | Pure routing resolver and CLI inspection seam |
 | `skills/use-opencode-worker/SKILL.md` | Parent-side delegation protocol |
 | `hooks/plaintext_handoff.py` | POSIX stage/Hook script |
 | `hooks/plaintext-handoff.ps1` | Windows stage/Hook script |
@@ -60,8 +66,9 @@ Key decisions:
 ## Verification
 
 1. Parse and validate the agent TOML.
-2. Run `python3 -m unittest tests.test_plaintext_handoff`.
-3. Install into a new Codex task, trust the Hook, and run the quick smoke.
+2. Validate the routing config and run `node --test tests/test_resolve_worker.mjs`.
+3. Run `python3 -m unittest tests.test_plaintext_handoff`.
+4. Install into a new Codex task, trust the Hook, and run the quick smoke.
 
 ## Risks
 

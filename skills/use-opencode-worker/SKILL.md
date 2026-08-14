@@ -10,6 +10,17 @@ description: Use the OpenCode Go-backed opencode_worker through the installed on
 - Use a worker for bounded, preferably read-only text, code, log, search,
   extraction, enumeration, or high-volume reading work whose raw material is
   much larger than the useful conclusion.
+- Read `config/opencode-worker-routing.json` from the current workspace before
+  choosing a worker. It is the parent-side routing policy; the Agent TOMLs and
+  Hook remain the runtime registration and delivery contract.
+- Resolve the worker in this order:
+  1. Respect an explicit user override such as `worker: code`,
+     `worker: opencode_worker_kimi`, or `model: deepseek-v4-pro`.
+  2. Otherwise use the task profile from the routing config.
+  3. Otherwise use the config's `default_profile`.
+- Use `node scripts/resolve-worker.mjs --profile <name>` when a deterministic
+  resolution record is useful. Its output is advisory metadata for the parent;
+  the returned `agent_type` is the value that must be staged and spawned.
 - Pick the agent type that matches the task's model needs:
 
 | Agent type | Model | Prefer when |
@@ -21,6 +32,10 @@ description: Use the OpenCode Go-backed opencode_worker through the installed on
 
 - Stage and spawn the exact same agent type. The Hook quarantines a staged/spawned
   type mismatch instead of delivering the assignment to the wrong model.
+- Never silently fall back when an explicit profile, model, or agent type is
+  unavailable. Report the selection failure and keep the parent in control.
+- The routing strengths are project policy tags, not a benchmark guarantee;
+  keep consequential reasoning and final verification in the parent.
 - Keep tightly coupled reasoning, consequential decisions, verification, and
   final integration in the parent.
 - Do not send secrets, private source, personal data, or regulated material

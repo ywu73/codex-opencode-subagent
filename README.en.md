@@ -20,6 +20,15 @@ One agent type per model; the parent picks per task:
 | `opencode_worker_glm` | `glm-5.2` |
 | `opencode_worker_kimi` | `kimi-k2.7-code` |
 
+The parent-side routing policy lives in
+[`config/opencode-worker-routing.json`](config/opencode-worker-routing.json).
+The parent should honor an explicit user choice such as `worker: code`,
+`worker: opencode_worker_kimi`, or `model: deepseek-v4-pro` first, then use a
+task profile and finally the configured default. Run
+`node scripts/resolve-worker.mjs --profile code` for a deterministic resolution
+record. The resolved `agent_type` must be used for both staging and native
+spawn; do not silently switch models.
+
 ## Three-step install
 
 ### 1. Set the OpenCode API key

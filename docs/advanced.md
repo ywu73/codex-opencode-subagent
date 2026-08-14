@@ -39,6 +39,16 @@ OpenCode Go 暴露了 Codex 支持的 Responses wire API。已用无效模型探
 | `agents/opencode-worker-glm.toml` | `opencode_worker_glm` | `glm-5.2` |
 | `agents/opencode-worker-kimi.toml` | `opencode_worker_kimi` | `kimi-k2.7-code` |
 
+### 选择配置
+
+`config/opencode-worker-routing.json` 是父 Agent 的选择策略，不替代 Agent
+TOML 的运行时注册。它记录模型的能力标签、成本等级、验证状态、别名和 task
+profile。选择优先级为：用户显式指定的 profile/agent type/model、task profile、
+默认 profile。可用 `node scripts/resolve-worker.mjs --profile code` 查看解析结果。
+
+解析结果中的 `agent_type` 必须同时用于 stage 和 native spawn；未知或不可用的
+显式选择直接失败，不允许静默 fallback。
+
 每个 worker 共用同一组配置：
 
 - provider: `opencode_go`

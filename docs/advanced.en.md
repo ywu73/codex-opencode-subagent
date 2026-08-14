@@ -21,6 +21,18 @@ OpenCode Go exposes the Responses wire API used by Codex. The `agents/opencode-w
 | `agents/opencode-worker-glm.toml` | `opencode_worker_glm` | `glm-5.2` |
 | `agents/opencode-worker-kimi.toml` | `opencode_worker_kimi` | `kimi-k2.7-code` |
 
+### Selection policy
+
+`config/opencode-worker-routing.json` is the parent-side selection policy; it does
+not replace Agent TOML runtime registration. It records capability tags, cost
+class, validation status, aliases, and task profiles. Selection precedence is an
+explicit user profile/agent type/model, then a task profile, then the default
+profile. Run `node scripts/resolve-worker.mjs --profile code` to inspect a
+deterministic resolution.
+
+The resolved `agent_type` must be used for both staging and native spawn. Unknown
+or unavailable explicit selections fail closed; there is no silent fallback.
+
 Every worker shares:
 
 - provider: `opencode_go`
