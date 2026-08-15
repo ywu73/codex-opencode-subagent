@@ -3,7 +3,7 @@
   "hooks": {
     "SubagentStart": [
       {
-        "matcher": "^(opencode_worker_ds_flash|opencode_worker_ds_pro)$",
+        "matcher": "^(opencode_worker_ds_flash_v4|opencode_worker_ds_pro_v4)$",
         "hooks": [
           {
             "type": "command",

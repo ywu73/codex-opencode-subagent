@@ -13,7 +13,7 @@ test("defaults to the configured fast reading worker", () => {
   const result = resolveSelection(config);
 
   assert.equal(result.selected_profile, "fast_read");
-  assert.equal(result.agent_type, "opencode_worker_ds_flash");
+  assert.equal(result.agent_type, "opencode_worker_ds_flash_v4");
   assert.equal(result.model, "deepseek-v4-flash");
   assert.equal(result.wire_api, "responses");
   assert.equal(result.selection_source, "default_profile");
@@ -23,7 +23,7 @@ test("resolves an explicit profile alias", () => {
   const result = resolveSelection(config, { profile: "pro" });
 
   assert.equal(result.selected_profile, "deep_reasoning");
-  assert.equal(result.agent_type, "opencode_worker_ds_pro");
+  assert.equal(result.agent_type, "opencode_worker_ds_pro_v4");
   assert.equal(result.selection_source, "explicit_profile");
 });
 
@@ -31,18 +31,18 @@ test("resolves an exact model id", () => {
   const result = resolveSelection(config, { model: "deepseek-v4-pro" });
 
   assert.equal(result.selected_profile, "deep_reasoning");
-  assert.equal(result.agent_type, "opencode_worker_ds_pro");
+  assert.equal(result.agent_type, "opencode_worker_ds_pro_v4");
   assert.equal(result.selection_source, "explicit_model");
 });
 
 test("resolves the versioned DeepSeek aliases", () => {
   assert.equal(
     resolveSelection(config, { profile: "ds_v4_flash" }).agent_type,
-    "opencode_worker_ds_flash",
+    "opencode_worker_ds_flash_v4",
   );
   assert.equal(
     resolveSelection(config, { profile: "ds_v4_pro" }).agent_type,
-    "opencode_worker_ds_pro",
+    "opencode_worker_ds_pro_v4",
   );
 });
 

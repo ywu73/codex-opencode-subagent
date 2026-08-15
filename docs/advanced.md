@@ -23,8 +23,8 @@ native smoke，也不能作为 Chat wire 的兼容依据。
 
 1. 父 Agent 形成完整、自洽、只读的 assignment。
 2. 通过 stdin stage 到单槽本地 state。
-3. 以唯一 task name、精确的所选 agent type（`opencode_worker_ds_flash` 或
-   `opencode_worker_ds_pro`）和
+3. 以唯一 task name、精确的所选 agent type（`opencode_worker_ds_flash_v4` 或
+   `opencode_worker_ds_pro_v4`）和
    `fork_turns="none"` 创建 child。
 4. 受信任 Hook 原子 claim，并通过 additionalContext 注入 assignment。
 5. OpenCode Go child 直接执行 assignment，必要时使用 Codex 只读工具。
@@ -36,8 +36,8 @@ native smoke，也不能作为 Chat wire 的兼容依据。
 
 | Agent 文件 | agent type | model |
 | --- | --- | --- |
-| `agents/opencode-worker-ds-flash.toml` | `opencode_worker_ds_flash` | `deepseek-v4-flash` |
-| `agents/opencode-worker-ds-pro.toml` | `opencode_worker_ds_pro` | `deepseek-v4-pro` |
+| `agents/opencode-worker-ds-flash-v4.toml` | `opencode_worker_ds_flash_v4` | `deepseek-v4-flash` |
+| `agents/opencode-worker-ds-pro-v4.toml` | `opencode_worker_ds_pro_v4` | `deepseek-v4-pro` |
 
 ### 选择配置
 
@@ -93,7 +93,7 @@ Agent registration、`model_provider` 和 `[model_providers.opencode_go]` 只存
 
 ## 已知限制与未来项
 
-- 默认 worker 为 `opencode_worker_ds_flash`（`deepseek-v4-flash`）；仓库还提供
+- 默认 worker 为 `opencode_worker_ds_flash_v4`（`deepseek-v4-flash`）；仓库还提供
   `deepseek-v4-pro` 的独立 agent 定义。
   新增模型 = 新增一个独立 Agent TOML，并把 agent type、skill、安装 prompt、
   文档和 smoke oracle 作为一个整体重验；已安装环境的 Hook matcher 与

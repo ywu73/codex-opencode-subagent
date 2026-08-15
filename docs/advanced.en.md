@@ -20,8 +20,8 @@ native Codex smoke.
 
 | Agent file | Agent type | Model |
 | --- | --- | --- |
-| `agents/opencode-worker-ds-flash.toml` | `opencode_worker_ds_flash` | `deepseek-v4-flash` |
-| `agents/opencode-worker-ds-pro.toml` | `opencode_worker_ds_pro` | `deepseek-v4-pro` |
+| `agents/opencode-worker-ds-flash-v4.toml` | `opencode_worker_ds_flash_v4` | `deepseek-v4-flash` |
+| `agents/opencode-worker-ds-pro-v4.toml` | `opencode_worker_ds_pro_v4` | `deepseek-v4-pro` |
 
 ### Selection policy
 
@@ -87,7 +87,7 @@ instead of delivering the assignment to the wrong model.
 
 ## Known limits
 
-- The default worker is `opencode_worker_ds_flash` (`deepseek-v4-flash`); this repository
+- The default worker is `opencode_worker_ds_flash_v4` (`deepseek-v4-flash`); this repository
   also ships a standalone worker for `deepseek-v4-pro`.
   Adding a model means adding one standalone Agent TOML
   and revalidating the agent, skill, install prompt, docs, and smoke oracle as

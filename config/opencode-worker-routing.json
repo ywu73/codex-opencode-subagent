@@ -24,8 +24,8 @@
   },
   "workers": {
     "fast_read": {
-      "agent_type": "opencode_worker_ds_flash",
-      "display_name": "OpenCode Worker DS Flash",
+      "agent_type": "opencode_worker_ds_flash_v4",
+      "display_name": "OpenCode Worker DS Flash v4",
       "model": "deepseek-v4-flash",
       "model_provider": "opencode_go",
       "base_url": "https://opencode.ai/zen/go/v1",
@@ -42,8 +42,8 @@
       }
     },
     "deep_reasoning": {
-      "agent_type": "opencode_worker_ds_pro",
-      "display_name": "OpenCode Worker DS Pro",
+      "agent_type": "opencode_worker_ds_pro_v4",
+      "display_name": "OpenCode Worker DS Pro v4",
       "model": "deepseek-v4-pro",
       "model_provider": "opencode_go",
       "base_url": "https://opencode.ai/zen/go/v1",

@@ -13,8 +13,8 @@ import path from "node:path";
 import test from "node:test";
 
 const agentFiles = [
-  "opencode-worker-ds-flash.toml",
-  "opencode-worker-ds-pro.toml",
+  "opencode-worker-ds-flash-v4.toml",
+  "opencode-worker-ds-pro-v4.toml",
 ];
 
 function makeInstallationFixture() {
@@ -38,7 +38,7 @@ function makeInstallationFixture() {
     JSON.stringify({
       hooks: {
         SubagentStart: [{
-          matcher: "^(opencode_worker_ds_flash|opencode_worker_ds_pro)$",
+          matcher: "^(opencode_worker_ds_flash_v4|opencode_worker_ds_pro_v4)$",
           hooks: [{ command: "python3 /tmp/plaintext_handoff.py --mode hook" }],
         }],
       },
@@ -103,8 +103,8 @@ test("validator reports unverified until the renamed workers are live-smoked", (
     assert.equal(output.installation_ready, true);
     assert.equal(output.live_smoke_complete, false);
     assert.deepEqual(output.unverified_workers, [
-      "opencode_worker_ds_flash",
-      "opencode_worker_ds_pro",
+      "opencode_worker_ds_flash_v4",
+      "opencode_worker_ds_pro_v4",
     ]);
     assert.equal(output.new_thread_required, true);
   } finally {

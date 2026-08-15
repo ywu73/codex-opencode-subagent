@@ -15,10 +15,10 @@ for (const promptPath of promptPaths) {
     assert.match(prompt, /--agent-type <selected_agent_type>/);
     assert.match(prompt, /Spawn the exact agent type <selected_agent_type>/);
     assert.match(prompt, /agent type is <selected_agent_type>/);
-    assert.doesNotMatch(prompt, /Spawn the exact agent type opencode_worker_ds_flash/);
-    assert.doesNotMatch(prompt, /distinct opencode_worker_ds_flash child/);
-    assert.doesNotMatch(prompt, /spawned opencode_worker_ds_flash child/);
-    assert.doesNotMatch(prompt, /agent_type opencode_worker_ds_flash/);
-    assert.doesNotMatch(prompt, /distinct native `opencode_worker_ds_flash` child/);
+    assert.doesNotMatch(prompt, /Spawn the exact agent type opencode_worker_ds_flash_v4/);
+    assert.doesNotMatch(prompt, /distinct opencode_worker_ds_flash_v4 child/);
+    assert.doesNotMatch(prompt, /spawned opencode_worker_ds_flash_v4 child/);
+    assert.doesNotMatch(prompt, /agent_type opencode_worker_ds_flash_v4/);
+    assert.doesNotMatch(prompt, /distinct native `opencode_worker_ds_flash_v4` child/);
   });
 }
