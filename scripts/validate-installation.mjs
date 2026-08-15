@@ -36,8 +36,8 @@ const checks = {
 
 try {
   const agentFiles = [
-    ["opencode-worker.toml", "opencode_worker", "deepseek-v4-flash", 1000000],
-    ["opencode-worker-pro.toml", "opencode_worker_pro", "deepseek-v4-pro", 1000000],
+    ["opencode-worker-ds-v4-flash.toml", "opencode_worker_ds_v4_flash", "deepseek-v4-flash", 1000000],
+    ["opencode-worker-ds-v4-pro.toml", "opencode_worker_ds_v4_pro", "deepseek-v4-pro", 1000000],
   ];
   for (const [fileName, agentName, model, contextWindow] of agentFiles) {
     const agent = readFileSync(path.join(codexHome, "agents", fileName), "utf8");
@@ -66,8 +66,8 @@ try {
 
   const routing = loadRoutingConfig();
   const expectedRouting = [
-    ["fast_read", "opencode_worker", "deepseek-v4-flash", 1000000, "responses"],
-    ["deep_reasoning", "opencode_worker_pro", "deepseek-v4-pro", 1000000, "responses"],
+    ["fast_read", "opencode_worker_ds_v4_flash", "deepseek-v4-flash", 1000000, "responses"],
+    ["deep_reasoning", "opencode_worker_ds_v4_pro", "deepseek-v4-pro", 1000000, "responses"],
   ];
   if (routing.default_profile !== "fast_read") {
     checks.routing_config_matches_agents = false;
@@ -91,7 +91,9 @@ try {
 
   const hookDir = path.join(codexHome, "hooks", "codex-opencode-subagent");
   const handoff = readFileSync(path.join(hookDir, "plaintext_handoff.py"), "utf8");
-  checks.hook_script_installed = handoff.includes("opencode_worker");
+  checks.hook_script_installed =
+    handoff.includes("opencode_worker_ds_v4_flash") &&
+    handoff.includes("opencode_worker_ds_v4_pro");
 
   let hooksText = "";
   for (const candidate of [
@@ -106,7 +108,7 @@ try {
   }
   checks.hook_registered =
     hooksText.includes(
-      "^(opencode_worker|opencode_worker_pro)$",
+      "^(opencode_worker_ds_v4_flash|opencode_worker_ds_v4_pro)$",
     ) && hooksText.includes("plaintext_handoff.py");
 } catch (error) {
   checks.install_checks_failed = error.message;

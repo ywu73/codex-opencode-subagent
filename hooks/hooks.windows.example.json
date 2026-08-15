@@ -1,9 +1,9 @@
 {
-  "description": "One-shot plaintext task handoff for the OpenCode-backed opencode_worker.",
+  "description": "One-shot plaintext task handoff for the OpenCode-backed DeepSeek workers.",
   "hooks": {
     "SubagentStart": [
       {
-        "matcher": "^(opencode_worker|opencode_worker_pro)$",
+        "matcher": "^(opencode_worker_ds_v4_flash|opencode_worker_ds_v4_pro)$",
         "hooks": [
           {
             "type": "command",

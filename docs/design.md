@@ -8,7 +8,8 @@ MCP/plugins, or switching the main task provider.
 
 ## Success criteria
 
-1. The `opencode_worker` family (`opencode_worker`, `opencode_worker_pro`) is
+1. The DeepSeek OpenCode worker family (`opencode_worker_ds_v4_flash`,
+   `opencode_worker_ds_v4_pro`) is
    discoverable in a new Codex
    task.
 2. A `fork_turns="none"` child receives the complete Hook-delivered assignment.
@@ -35,8 +36,9 @@ Key decisions:
 
 - Each Agent TOML owns `model_provider = "opencode_go"`, its own `model`,
   `base_url`, `wire_api = "responses"`, and `env_key = "OPENCODE_API_KEY"`.
-- One agent type per model: `opencode_worker` (deepseek-v4-flash, default) and
-  `opencode_worker_pro` (deepseek-v4-pro); the parent picks per task.
+- One agent type per model: `opencode_worker_ds_v4_flash` (deepseek-v4-flash,
+  default) and `opencode_worker_ds_v4_pro` (deepseek-v4-pro); the parent picks
+  per task.
 - `config/opencode-worker-routing.json` is the parent-side selection policy:
   explicit user override, task profile, then default profile. A small resolver
   returns the exact profile, model, and agent type without performing a provider

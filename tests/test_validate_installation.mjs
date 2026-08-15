@@ -13,8 +13,8 @@ import path from "node:path";
 import test from "node:test";
 
 const agentFiles = [
-  "opencode-worker.toml",
-  "opencode-worker-pro.toml",
+  "opencode-worker-ds-v4-flash.toml",
+  "opencode-worker-ds-v4-pro.toml",
 ];
 
 function makeInstallationFixture() {
@@ -38,7 +38,7 @@ function makeInstallationFixture() {
     JSON.stringify({
       hooks: {
         SubagentStart: [{
-          matcher: "^(opencode_worker|opencode_worker_pro)$",
+          matcher: "^(opencode_worker_ds_v4_flash|opencode_worker_ds_v4_pro)$",
           hooks: [{ command: "python3 /tmp/plaintext_handoff.py --mode hook" }],
         }],
       },
@@ -81,7 +81,7 @@ test("validator rejects chat wire in every installed worker", async (t) => {
   }
 });
 
-test("validator reports ready for the two live-verified workers", () => {
+test("validator reports unverified until the renamed workers are live-smoked", () => {
   const root = makeInstallationFixture();
   try {
     for (const fileName of agentFiles) {
@@ -99,10 +99,13 @@ test("validator reports ready for the two live-verified workers", () => {
     const output = JSON.parse(result.stdout);
 
     assert.equal(result.status, 0, result.stdout || result.stderr);
-    assert.equal(output.status, "ready");
+    assert.equal(output.status, "installed-unverified");
     assert.equal(output.installation_ready, true);
-    assert.equal(output.live_smoke_complete, true);
-    assert.deepEqual(output.unverified_workers, []);
+    assert.equal(output.live_smoke_complete, false);
+    assert.deepEqual(output.unverified_workers, [
+      "opencode_worker_ds_v4_flash",
+      "opencode_worker_ds_v4_pro",
+    ]);
     assert.equal(output.new_thread_required, true);
   } finally {
     rmSync(root, { recursive: true, force: true });

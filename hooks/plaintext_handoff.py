@@ -21,10 +21,10 @@ else:
 # assignment for one exact type and spawns that same type; the Hook quarantines
 # a mismatch instead of delivering to the wrong model.
 AGENT_TYPES = (
-    "opencode_worker",
-    "opencode_worker_pro",
+    "opencode_worker_ds_v4_flash",
+    "opencode_worker_ds_v4_pro",
 )
-DEFAULT_AGENT_TYPE = "opencode_worker"
+DEFAULT_AGENT_TYPE = "opencode_worker_ds_v4_flash"
 # Shared file-prefix family name for the single-slot dispatch state.
 AGENT_TYPE = DEFAULT_AGENT_TYPE
 
@@ -156,7 +156,7 @@ def stage_locked(root: pathlib.Path, ttl_seconds: int, assignment: str, agent_ty
     replace_expired = False
     reconcile_claims(root, now)
     if any(root.glob(f"{AGENT_TYPE}.claimed.*.json")) or any(root.glob(f"{AGENT_TYPE}.failed.*.json")):
-        fail("An opencode_worker handoff is already claimed or quarantined. Resolve it before staging another.", 3)
+        fail("An OpenCode worker handoff is already claimed or quarantined. Resolve it before staging another.", 3)
     if pending.exists():
         try:
             with pending.open(encoding="utf-8") as stream:
@@ -172,7 +172,7 @@ def stage_locked(root: pathlib.Path, ttl_seconds: int, assignment: str, agent_ty
             except EnvelopeError:
                 fail("The existing focused OpenCode handoff has an invalid schema, agent type, assignment, or expiry. Refusing to replace it.", 9)
             if expires_at > now:
-                fail("An opencode_worker handoff is already pending. Let it be consumed or expire before staging another.", 3)
+                fail("An OpenCode worker handoff is already pending. Let it be consumed or expire before staging another.", 3)
             replace_expired = True
     envelope = {
         "schema": 1,
@@ -199,7 +199,7 @@ def stage_locked(root: pathlib.Path, ttl_seconds: int, assignment: str, agent_ty
             try:
                 os.link(temporary, pending)
             except FileExistsError:
-                fail("An opencode_worker handoff is already pending. Consume or remove it before staging another.", 3)
+                fail("An OpenCode worker handoff is already pending. Consume or remove it before staging another.", 3)
             except OSError as error:
                 transport_failure("publishing a pending handoff", error)
     except OSError as error:
@@ -242,9 +242,9 @@ def run_target_hook_locked(root: pathlib.Path, hook_input: dict) -> None:
     reconcile_claims(root, now)
     pending = root / f"{AGENT_TYPE}.pending.json"
     if any(root.glob(f"{AGENT_TYPE}.claimed.*.json")) or any(root.glob(f"{AGENT_TYPE}.failed.*.json")):
-        fail("A plaintext handoff is already claimed or quarantined for an opencode_worker.", 11)
+        fail("A plaintext handoff is already claimed or quarantined for an OpenCode worker.", 11)
     if not pending.exists():
-        fail("No plaintext handoff was available for the opencode_worker start.", 10)
+        fail("No plaintext handoff was available for the OpenCode worker start.", 10)
     agent_id = re.sub(r"[^A-Za-z0-9_-]", "_", str(hook_input.get("agent_id") or uuid.uuid4().hex))
     claimed = root / f"{AGENT_TYPE}.claimed.{agent_id}.{uuid.uuid4().hex}.json"
     try:

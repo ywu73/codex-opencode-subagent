@@ -11,8 +11,12 @@
   "aliases": {
     "default": "fast_read",
     "flash": "fast_read",
+    "ds-flash": "fast_read",
+    "ds_v4_flash": "fast_read",
     "pro": "deep_reasoning",
-    "deep": "deep_reasoning"
+    "deep": "deep_reasoning",
+    "ds-pro": "deep_reasoning",
+    "ds_v4_pro": "deep_reasoning"
   },
   "task_profiles": {
     "bulk_reading": "fast_read",
@@ -20,7 +24,8 @@
   },
   "workers": {
     "fast_read": {
-      "agent_type": "opencode_worker",
+      "agent_type": "opencode_worker_ds_v4_flash",
+      "display_name": "OpenCode Worker DS v4 Flash",
       "model": "deepseek-v4-flash",
       "model_provider": "opencode_go",
       "base_url": "https://opencode.ai/zen/go/v1",
@@ -33,11 +38,12 @@
       "validation": {
         "protocol": "verified",
         "provider_responses_probe": "verified",
-        "live_smoke": "verified"
+        "live_smoke": "pending"
       }
     },
     "deep_reasoning": {
-      "agent_type": "opencode_worker_pro",
+      "agent_type": "opencode_worker_ds_v4_pro",
+      "display_name": "OpenCode Worker DS v4 Pro",
       "model": "deepseek-v4-pro",
       "model_provider": "opencode_go",
       "base_url": "https://opencode.ai/zen/go/v1",
@@ -50,7 +56,7 @@
       "validation": {
         "protocol": "verified",
         "provider_responses_probe": "verified",
-        "live_smoke": "verified"
+        "live_smoke": "pending"
       }
     }
   }

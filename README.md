@@ -6,7 +6,7 @@
 用于边界明确的代码、日志、搜索、提取、枚举和大量文本阅读。本实现不调用本地
 OpenCode CLI，也不依赖 MCP、插件或 CC Switch。
 
-它直接复用 `codex-deepseek-subagent` 的架构：`opencode_worker` 系列是 Codex 原生
+它直接复用 `codex-deepseek-subagent` 的架构：DeepSeek OpenCode worker 系列是 Codex 原生
 child，每个 Agent TOML 自带 `model_provider`、`model`、`base_url`、`wire_api` 和
 `OPENCODE_API_KEY`。Codex 用 `SubagentStart` Hook 把父 Agent 的一次性 plaintext
 assignment 注入 child。
@@ -15,8 +15,8 @@ assignment 注入 child。
 
 | Agent type | 模型 | 当前路由状态 |
 | --- | --- | --- |
-| `opencode_worker` | `deepseek-v4-flash`（默认） | enabled；Responses 探针通过 |
-| `opencode_worker_pro` | `deepseek-v4-pro` | enabled；Responses 探针通过 |
+| `opencode_worker_ds_v4_flash`（OpenCode Worker DS v4 Flash） | `deepseek-v4-flash`（默认） | enabled；Responses 探针通过 |
+| `opencode_worker_ds_v4_pro`（OpenCode Worker DS v4 Pro） | `deepseek-v4-pro` | enabled；Responses 探针通过 |
 
 模型选择策略位于 [config/opencode-worker-routing.json](config/opencode-worker-routing.json)。
 主 Agent 应优先尊重用户的显式选择，例如 `worker: pro` 或
@@ -41,18 +41,18 @@ shell 中设置；Windows 在用户环境变量中新建 `OPENCODE_API_KEY`。
 把 [prompts/install-with-codex.md](prompts/install-with-codex.md) 交给 Codex
 执行。安装会新增：
 
-- `<codex-home>/agents/opencode-worker.toml` 和 `opencode-worker-pro.toml`
+- `<codex-home>/agents/opencode-worker-ds-v4-flash.toml` 和 `opencode-worker-ds-v4-pro.toml`
 - `<codex-home>/skills/use-opencode-worker/`
 - `<codex-home>/hooks/codex-opencode-subagent/plaintext_handoff.py`
 - 一条 `SubagentStart` Hook，matcher 为
-  `^(opencode_worker|opencode_worker_pro)$`
+  `^(opencode_worker_ds_v4_flash|opencode_worker_ds_v4_pro)$`
 - 个人 `AGENTS.md` 中带 marker 的 `$use-opencode-worker` 索引
 
 它不会切换主模型/provider，也不会在安装阶段调用 OpenCode Go。
 
 ### 3. 信任 Hook 并测试
 
-1. 在 Codex 输入 `/hooks`，确认它只匹配两个 `opencode_worker` agent type，
+1. 在 Codex 输入 `/hooks`，确认它只匹配两个 DeepSeek agent type，
    命令指向刚安装的 `plaintext_handoff.py`，然后信任。
 2. 新开一个 Codex 任务。
 3. 把只验证默认 worker 的 [prompts/quick-smoke-test.md](prompts/quick-smoke-test.md)
@@ -62,7 +62,8 @@ shell 中设置；Windows 在用户环境变量中新建 `OPENCODE_API_KEY`。
 
 快速测试应同时满足：
 
-- Codex 暴露独立原生 child，agent type 为你选定的 `opencode_worker` 系列之一；
+- Codex 暴露独立原生 child，agent type 为你选定的 `opencode_worker_ds_v4_flash` 或
+  `opencode_worker_ds_v4_pro`；
 - child 返回父 Agent 的随机 marker；
 - 一次性 pending handoff 已被消费；
 - 主任务仍使用原来的模型/provider；

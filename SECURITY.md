@@ -2,7 +2,8 @@
 
 ## API key
 
-`opencode_worker` 系列（`opencode_worker` / `opencode_worker_pro`）共用
+DeepSeek OpenCode worker 系列（`opencode_worker_ds_v4_flash` /
+`opencode_worker_ds_v4_pro`）共用
 `OPENCODE_API_KEY` 作为
 provider 凭据。不要把它写进 TOML、Hook、skill、assignment、聊天或 Issue。
 
@@ -11,7 +12,7 @@ provider 凭据。不要把它写进 TOML、Hook、skill、assignment、聊天�
 
 ## Data boundary
 
-`opencode_worker` 系列是独立的 Codex child session，直接使用 OpenCode Go 的
+DeepSeek OpenCode worker 系列是独立的 Codex child session，直接使用 OpenCode Go 的
 Responses API。父 Agent 通过 Hook 交付的 assignment、child 上下文和工具
 结果会发送到所选模型（`deepseek-v4-flash` / `deepseek-v4-pro`）端点。主 Agent 仍使用当前
 模型/provider。

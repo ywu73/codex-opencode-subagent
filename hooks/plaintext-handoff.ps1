@@ -8,8 +8,8 @@ param(
 
     [string]$StateDirectory,
 
-    [ValidateSet("opencode_worker", "opencode_worker_pro")]
-    [string]$AgentType = "opencode_worker"
+    [ValidateSet("opencode_worker_ds_v4_flash", "opencode_worker_ds_v4_pro")]
+    [string]$AgentType = "opencode_worker_ds_v4_flash"
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,9 +18,9 @@ Set-StrictMode -Version Latest
 # The worker family: one agent type per OpenCode Go model. The parent stages an
 # assignment for one exact type and spawns that same type; the Hook quarantines
 # a mismatch instead of delivering to the wrong model.
-$agentTypes = @("opencode_worker", "opencode_worker_pro")
+$agentTypes = @("opencode_worker_ds_v4_flash", "opencode_worker_ds_v4_pro")
 # Shared file-prefix family name for the single-slot dispatch state.
-$agentType = "opencode_worker"
+$agentType = "opencode_worker_ds_v4_flash"
 $stagedAgentType = $AgentType
 $stateRoot = if ([string]::IsNullOrWhiteSpace($StateDirectory)) {
     Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "Codex\opencode-plaintext-handoff"
@@ -249,7 +249,7 @@ function Publish-Handoff([object]$Handoff, [bool]$ReplaceExpired) {
         }
     } catch [System.IO.IOException] {
         if (-not $ReplaceExpired -and [System.IO.File]::Exists($pendingPath)) {
-            Stop-Handoff "An opencode_worker handoff is already pending. Consume or remove it before staging another." 3
+            Stop-Handoff "An OpenCode worker handoff is already pending. Consume or remove it before staging another." 3
         }
         Stop-TransportFailure "publishing a pending handoff" $_.Exception
     } catch {
@@ -268,7 +268,7 @@ function Publish-Handoff([object]$Handoff, [bool]$ReplaceExpired) {
 function Stage-Locked([string]$Assignment) {
     Remove-ExpiredClaims
     if (@(Get-StateFiles "$agentType.claimed.*.json").Count -gt 0 -or @(Get-StateFiles "$agentType.failed.*.json").Count -gt 0) {
-        Stop-Handoff "An opencode_worker handoff is already claimed or quarantined. Resolve it before staging another." 3
+            Stop-Handoff "An OpenCode worker handoff is already claimed or quarantined. Resolve it before staging another." 3
     }
 
     $now = [DateTimeOffset]::UtcNow
@@ -279,7 +279,7 @@ function Stage-Locked([string]$Assignment) {
             Stop-Handoff "The existing OpenCode handoff is malformed. Refusing to replace it." 9
         }
         if ($validation.ExpiresAt -gt $now) {
-            Stop-Handoff "An opencode_worker handoff is already pending. Let it be consumed or expire before staging another." 3
+            Stop-Handoff "An OpenCode worker handoff is already pending. Let it be consumed or expire before staging another." 3
         }
         $replaceExpired = $true
     }
@@ -299,10 +299,10 @@ function Stage-Locked([string]$Assignment) {
 function Run-TargetHookLocked([object]$HookInput) {
     Remove-ExpiredClaims
     if (@(Get-StateFiles "$agentType.claimed.*.json").Count -gt 0 -or @(Get-StateFiles "$agentType.failed.*.json").Count -gt 0) {
-        Stop-Handoff "A plaintext handoff is already claimed or quarantined for an opencode_worker." 11
+            Stop-Handoff "A plaintext handoff is already claimed or quarantined for an OpenCode worker." 11
     }
     if (-not [System.IO.File]::Exists($pendingPath)) {
-        Stop-Handoff "No plaintext handoff was available for the opencode_worker start." 10
+            Stop-Handoff "No plaintext handoff was available for the OpenCode worker start." 10
     }
 
     $rawAgentID = [string](Get-JsonProperty $HookInput "agent_id")

@@ -10,7 +10,7 @@ local read-only tool call, and the native completion callback.
 Run the repository's native OpenCode Go subagent smoke test.
 
 1. Resolve one enabled worker and retain its exact agent type as
-   `selected_agent_type` for the whole test. Use `opencode_worker` when no
+   `selected_agent_type` for the whole test. Use `opencode_worker_ds_v4_flash` when no
    explicit enabled profile was requested. As the root agent, generate a fresh
    unpredictable marker locally. Do not put
    the marker or the child assignment in user-visible commentary, the spawn

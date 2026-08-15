@@ -3,7 +3,7 @@
 ## Composition boundary
 
 The Codex main task keeps its current model, provider, and login.
-`opencode_worker` and its variants are native Codex children; each child's
+The DeepSeek OpenCode worker variants are native Codex children; each child's
 Agent TOML owns an OpenCode Go provider configuration. The child is an OpenCode
 Go session and can use read-only Codex tools directly.
 
@@ -20,8 +20,8 @@ native Codex smoke.
 
 | Agent file | Agent type | Model |
 | --- | --- | --- |
-| `agents/opencode-worker.toml` | `opencode_worker` | `deepseek-v4-flash` |
-| `agents/opencode-worker-pro.toml` | `opencode_worker_pro` | `deepseek-v4-pro` |
+| `agents/opencode-worker-ds-v4-flash.toml` | `opencode_worker_ds_v4_flash` | `deepseek-v4-flash` |
+| `agents/opencode-worker-ds-v4-pro.toml` | `opencode_worker_ds_v4_pro` | `deepseek-v4-pro` |
 
 ### Selection policy
 
@@ -87,7 +87,7 @@ instead of delivering the assignment to the wrong model.
 
 ## Known limits
 
-- The default worker is `opencode_worker` (`deepseek-v4-flash`); this repository
+- The default worker is `opencode_worker_ds_v4_flash` (`deepseek-v4-flash`); this repository
   also ships a standalone worker for `deepseek-v4-pro`.
   Adding a model means adding one standalone Agent TOML
   and revalidating the agent, skill, install prompt, docs, and smoke oracle as

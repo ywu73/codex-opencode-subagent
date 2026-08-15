@@ -4,7 +4,7 @@
 
 ## 组合边界
 
-Codex 主任务保持当前模型、provider 和登录不变。`opencode_worker` 系列是 Codex 原生
+Codex 主任务保持当前模型、provider 和登录不变。DeepSeek OpenCode worker 系列是 Codex 原生
 管理的独立 child，每个 child 的 Agent TOML 自带 OpenCode Go provider 配置。child
 本身是 OpenCode Go session，可以直接使用 Codex 支持的只读工具。
 
@@ -23,7 +23,8 @@ native smoke，也不能作为 Chat wire 的兼容依据。
 
 1. 父 Agent 形成完整、自洽、只读的 assignment。
 2. 通过 stdin stage 到单槽本地 state。
-3. 以唯一 task name、精确的所选 agent type（`opencode_worker` 系列之一）和
+3. 以唯一 task name、精确的所选 agent type（`opencode_worker_ds_v4_flash` 或
+   `opencode_worker_ds_v4_pro`）和
    `fork_turns="none"` 创建 child。
 4. 受信任 Hook 原子 claim，并通过 additionalContext 注入 assignment。
 5. OpenCode Go child 直接执行 assignment，必要时使用 Codex 只读工具。
@@ -35,8 +36,8 @@ native smoke，也不能作为 Chat wire 的兼容依据。
 
 | Agent 文件 | agent type | model |
 | --- | --- | --- |
-| `agents/opencode-worker.toml` | `opencode_worker` | `deepseek-v4-flash` |
-| `agents/opencode-worker-pro.toml` | `opencode_worker_pro` | `deepseek-v4-pro` |
+| `agents/opencode-worker-ds-v4-flash.toml` | `opencode_worker_ds_v4_flash` | `deepseek-v4-flash` |
+| `agents/opencode-worker-ds-v4-pro.toml` | `opencode_worker_ds_v4_pro` | `deepseek-v4-pro` |
 
 ### 选择配置
 
@@ -79,7 +80,7 @@ mutation 默认值，不是防泄漏边界。stage 时用 `--agent-type`（Windo
 
 Agent registration、`model_provider` 和 `[model_providers.opencode_go]` 只存在于
 各个独立 Agent 文件，每个 worker 自带一份 provider 定义。顶层配置不增加
-`[agents.opencode_worker*]` 或 `[model_providers.opencode_go]`，主任务 provider
+`[agents.opencode_worker_ds_*]` 或 `[model_providers.opencode_go]`，主任务 provider
 不变。
 
 ## 验证矩阵
@@ -92,7 +93,7 @@ Agent registration、`model_provider` 和 `[model_providers.opencode_go]` 只存
 
 ## 已知限制与未来项
 
-- 默认 worker 为 `opencode_worker`（`deepseek-v4-flash`）；仓库还提供
+- 默认 worker 为 `opencode_worker_ds_v4_flash`（`deepseek-v4-flash`）；仓库还提供
   `deepseek-v4-pro` 的独立 agent 定义。
   新增模型 = 新增一个独立 Agent TOML，并把 agent type、skill、安装 prompt、
   文档和 smoke oracle 作为一个整体重验；已安装环境的 Hook matcher 与
