@@ -8,8 +8,8 @@ param(
 
     [string]$StateDirectory,
 
-    [ValidateSet("opencode_worker_ds_v4_flash", "opencode_worker_ds_v4_pro")]
-    [string]$AgentType = "opencode_worker_ds_v4_flash"
+    [ValidateSet("opencode_worker_ds_flash", "opencode_worker_ds_pro")]
+    [string]$AgentType = "opencode_worker_ds_flash"
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,9 +18,9 @@ Set-StrictMode -Version Latest
 # The worker family: one agent type per OpenCode Go model. The parent stages an
 # assignment for one exact type and spawns that same type; the Hook quarantines
 # a mismatch instead of delivering to the wrong model.
-$agentTypes = @("opencode_worker_ds_v4_flash", "opencode_worker_ds_v4_pro")
+$agentTypes = @("opencode_worker_ds_flash", "opencode_worker_ds_pro")
 # Shared file-prefix family name for the single-slot dispatch state.
-$agentType = "opencode_worker_ds_v4_flash"
+$agentType = "opencode_worker_ds_flash"
 $stagedAgentType = $AgentType
 $stateRoot = if ([string]::IsNullOrWhiteSpace($StateDirectory)) {
     Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "Codex\opencode-plaintext-handoff"

@@ -9,7 +9,7 @@ Test the installed OpenCode Go subagent through the recommended native Hook
 path. Do not ask me for an API key or display its value.
 
 1. Load $use-opencode-worker. This checkout-free smoke tests only the installed
-   default worker: retain the exact value `opencode_worker_ds_v4_flash` as
+   default worker: retain the exact value `opencode_worker_ds_flash` as
    `selected_agent_type` for the whole test. Use the repository smoke prompt
    instead when testing another profile. In parent-owned execution state,
    generate a fresh

@@ -14,7 +14,7 @@ description: Use the OpenCode Go-backed DeepSeek workers through the installed o
   choosing a worker when that file exists. It is the parent-side routing policy;
   the Agent TOMLs and Hook remain the runtime registration and delivery contract.
   If the routing file is absent, the checkout-free quick smoke may select only
-  the exact default `opencode_worker_ds_v4_flash`; do not infer or select another profile.
+  the exact default `opencode_worker_ds_flash`; do not infer or select another profile.
 - Resolve the worker in this order:
   1. Respect an explicit enabled user override such as `worker: pro` or
      `model: deepseek-v4-pro`.
@@ -27,8 +27,8 @@ description: Use the OpenCode Go-backed DeepSeek workers through the installed o
 
 | Agent type | Model | Routing status / use |
 | --- | --- | --- |
-| `opencode_worker_ds_v4_flash` | `deepseek-v4-flash` | Available default; bounded reading and extraction |
-| `opencode_worker_ds_v4_pro` | `deepseek-v4-pro` | Available; deeper reasoning |
+| `opencode_worker_ds_flash` | `deepseek-v4-flash` | Available default; bounded reading and extraction |
+| `opencode_worker_ds_pro` | `deepseek-v4-pro` | Available; deeper reasoning |
 
 - Stage and spawn the exact same agent type. The Hook quarantines a staged/spawned
   type mismatch instead of delivering the assignment to the wrong model.
@@ -54,9 +54,9 @@ description: Use the OpenCode Go-backed DeepSeek workers through the installed o
    user-visible commentary merely for transport.
 2. Pipe the assignment through stdin to the installed handoff script in
    `stage` mode, naming the exact agent type you will spawn:
-   - Windows: `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "<codex-home>\hooks\codex-opencode-subagent\plaintext-handoff.ps1" -Mode stage -AgentType opencode_worker_ds_v4_flash`
-   - macOS/Linux: `python3 "<codex-home>/hooks/codex-opencode-subagent/plaintext_handoff.py" --mode stage --agent-type opencode_worker_ds_v4_flash`
-   (Use the chosen family type, e.g. `opencode_worker_ds_v4_pro`, in both the stage
+   - Windows: `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "<codex-home>\hooks\codex-opencode-subagent\plaintext-handoff.ps1" -Mode stage -AgentType opencode_worker_ds_flash`
+   - macOS/Linux: `python3 "<codex-home>/hooks/codex-opencode-subagent/plaintext_handoff.py" --mode stage --agent-type opencode_worker_ds_flash`
+   (Use the chosen family type, e.g. `opencode_worker_ds_pro`, in both the stage
    command and the spawn below.)
 3. Require a successful stage result naming the same agent type you intend to
    spawn. Treat a lock contender, active pending or claimed item, quarantined

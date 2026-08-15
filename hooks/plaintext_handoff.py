@@ -21,10 +21,10 @@ else:
 # assignment for one exact type and spawns that same type; the Hook quarantines
 # a mismatch instead of delivering to the wrong model.
 AGENT_TYPES = (
-    "opencode_worker_ds_v4_flash",
-    "opencode_worker_ds_v4_pro",
+    "opencode_worker_ds_flash",
+    "opencode_worker_ds_pro",
 )
-DEFAULT_AGENT_TYPE = "opencode_worker_ds_v4_flash"
+DEFAULT_AGENT_TYPE = "opencode_worker_ds_flash"
 # Shared file-prefix family name for the single-slot dispatch state.
 AGENT_TYPE = DEFAULT_AGENT_TYPE
 

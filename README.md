@@ -15,8 +15,8 @@ assignment 注入 child。
 
 | Agent type | 模型 | 当前路由状态 |
 | --- | --- | --- |
-| `opencode_worker_ds_v4_flash`（OpenCode Worker DS v4 Flash） | `deepseek-v4-flash`（默认） | enabled；Responses 探针通过 |
-| `opencode_worker_ds_v4_pro`（OpenCode Worker DS v4 Pro） | `deepseek-v4-pro` | enabled；Responses 探针通过 |
+| `opencode_worker_ds_flash`（OpenCode Worker DS Flash） | `deepseek-v4-flash`（默认） | enabled；Responses 探针通过 |
+| `opencode_worker_ds_pro`（OpenCode Worker DS Pro） | `deepseek-v4-pro` | enabled；Responses 探针通过 |
 
 模型选择策略位于 [config/opencode-worker-routing.json](config/opencode-worker-routing.json)。
 主 Agent 应优先尊重用户的显式选择，例如 `worker: pro` 或
@@ -41,11 +41,11 @@ shell 中设置；Windows 在用户环境变量中新建 `OPENCODE_API_KEY`。
 把 [prompts/install-with-codex.md](prompts/install-with-codex.md) 交给 Codex
 执行。安装会新增：
 
-- `<codex-home>/agents/opencode-worker-ds-v4-flash.toml` 和 `opencode-worker-ds-v4-pro.toml`
+- `<codex-home>/agents/opencode-worker-ds-flash.toml` 和 `opencode-worker-ds-pro.toml`
 - `<codex-home>/skills/use-opencode-worker/`
 - `<codex-home>/hooks/codex-opencode-subagent/plaintext_handoff.py`
 - 一条 `SubagentStart` Hook，matcher 为
-  `^(opencode_worker_ds_v4_flash|opencode_worker_ds_v4_pro)$`
+  `^(opencode_worker_ds_flash|opencode_worker_ds_pro)$`
 - 个人 `AGENTS.md` 中带 marker 的 `$use-opencode-worker` 索引
 
 它不会切换主模型/provider，也不会在安装阶段调用 OpenCode Go。
@@ -62,8 +62,8 @@ shell 中设置；Windows 在用户环境变量中新建 `OPENCODE_API_KEY`。
 
 快速测试应同时满足：
 
-- Codex 暴露独立原生 child，agent type 为你选定的 `opencode_worker_ds_v4_flash` 或
-  `opencode_worker_ds_v4_pro`；
+- Codex 暴露独立原生 child，agent type 为你选定的 `opencode_worker_ds_flash` 或
+  `opencode_worker_ds_pro`；
 - child 返回父 Agent 的随机 marker；
 - 一次性 pending handoff 已被消费；
 - 主任务仍使用原来的模型/provider；

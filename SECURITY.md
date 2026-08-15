@@ -2,8 +2,8 @@
 
 ## API key
 
-DeepSeek OpenCode worker 系列（`opencode_worker_ds_v4_flash` /
-`opencode_worker_ds_v4_pro`）共用
+DeepSeek OpenCode worker 系列（`opencode_worker_ds_flash` /
+`opencode_worker_ds_pro`）共用
 `OPENCODE_API_KEY` 作为
 provider 凭据。不要把它写进 TOML、Hook、skill、assignment、聊天或 Issue。
 

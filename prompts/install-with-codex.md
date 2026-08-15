@@ -7,7 +7,7 @@ main-agent model and provider.
 
 ```text
 Install the native DeepSeek OpenCode custom subagent family
-(opencode_worker_ds_v4_flash and opencode_worker_ds_v4_pro) from this
+(opencode_worker_ds_flash and opencode_worker_ds_pro) from this
 repository into my personal Codex configuration. Use the repository checkout as
 the source.
 
@@ -42,9 +42,9 @@ Procedure:
    unrelated configuration. If an existing agent, skill, or Hook at the intended
    identity serves a different purpose, stop and report the conflict.
 3. Install exactly these two agent files from the repository checkout:
-  <codex-home>/agents/opencode-worker-ds-v4-flash.toml (opencode_worker_ds_v4_flash,
+  <codex-home>/agents/opencode-worker-ds-flash.toml (opencode_worker_ds_flash,
    deepseek-v4-flash),
-  <codex-home>/agents/opencode-worker-ds-v4-pro.toml (opencode_worker_ds_v4_pro,
+  <codex-home>/agents/opencode-worker-ds-pro.toml (opencode_worker_ds_pro,
    deepseek-v4-pro). Remove the legacy opencode-worker-glm.toml,
    opencode-worker-glm-51.toml, opencode-worker-kimi.toml, and
    opencode-worker-mimo.toml files when they match those former agent identities.
@@ -57,7 +57,7 @@ Procedure:
    path cannot be installed instead of silently making inherited turns the
    default.
 6. Install one SubagentStart command Hook whose matcher is exactly
-   ^(opencode_worker_ds_v4_flash|opencode_worker_ds_v4_pro)$,
+   ^(opencode_worker_ds_flash|opencode_worker_ds_pro)$,
    whose timeout is 10 seconds, whose
    additionalContextLimit is 0, and whose command invokes the absolute path of
    the installed platform handoff script in hook mode. Use the corresponding
@@ -70,7 +70,7 @@ Procedure:
    block and confirm that it tells the parent to load $use-opencode-worker
    before spawning, continuing, or troubleshooting the role.
 8. Parse each installed agent file with a real TOML parser. Confirm that the
-   two files name opencode_worker_ds_v4_flash and opencode_worker_ds_v4_pro respectively, select
+   two files name opencode_worker_ds_flash and opencode_worker_ds_pro respectively, select
    model_provider opencode_go and respectively the models deepseek-v4-flash and
    deepseek-v4-pro, use the Responses wire API (the only Codex-supported value),
    declare the model-specific

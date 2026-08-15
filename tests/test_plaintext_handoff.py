@@ -37,10 +37,10 @@ def resolve_script():
 
 
 SCRIPT = resolve_script()
-AGENT_TYPE = "opencode_worker_ds_v4_flash"
+AGENT_TYPE = "opencode_worker_ds_flash"
 AGENT_TYPES = (
-    "opencode_worker_ds_v4_flash",
-    "opencode_worker_ds_v4_pro",
+    "opencode_worker_ds_flash",
+    "opencode_worker_ds_pro",
 )
 
 
@@ -181,7 +181,7 @@ class PlaintextHandoffCliTests(unittest.TestCase):
 
     def test_stage_accepts_alternate_agent_type_and_hook_delivers_to_exact_type(self):
         assignment = "Summarize with the DS Pro worker."
-        selected = "opencode_worker_ds_v4_pro"
+        selected = "opencode_worker_ds_pro"
 
         staged = self.invoke("stage", assignment, "--agent-type", selected)
 
@@ -198,7 +198,7 @@ class PlaintextHandoffCliTests(unittest.TestCase):
         self.assertEqual(delivered.returncode, 0, delivered.stderr)
         output = json.loads(delivered.stdout)["hookSpecificOutput"]
         self.assertIn(
-            "You are the spawned opencode_worker_ds_v4_pro child", output["additionalContext"]
+            "You are the spawned opencode_worker_ds_pro child", output["additionalContext"]
         )
         self.assertIn("BEGIN PARENT ASSIGNMENT\n" + assignment, output["additionalContext"])
         self.assertFalse(self.handoff_state_files())
@@ -235,13 +235,13 @@ class PlaintextHandoffCliTests(unittest.TestCase):
         # The Hook must quarantine the claim instead of handing the assignment
         # to the wrong model.
         assignment = "must not reach the wrong model"
-        self.write_pending(envelope(assignment, agent_type="opencode_worker_ds_v4_pro"))
+        self.write_pending(envelope(assignment, agent_type="opencode_worker_ds_pro"))
 
         result = self.invoke("hook", self.target_hook_input("wrong-model-agent"))
 
         self.assertEqual(result.returncode, 7, result.stderr)
         self.assertEqual(result.stdout, "")
-        self.assertIn("opencode_worker_ds_v4_pro", result.stderr)
+        self.assertIn("opencode_worker_ds_pro", result.stderr)
         self.assertFalse(self.pending_path.exists())
         quarantined = list(self.state_directory.glob(f"{AGENT_TYPE}.failed.*.json"))
         self.assertEqual(len(quarantined), 1)

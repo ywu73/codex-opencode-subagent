@@ -15,8 +15,8 @@ One agent type per model; the parent picks per task:
 
 | Agent type | Model | Current routing status |
 | --- | --- | --- |
-| `opencode_worker_ds_v4_flash` (OpenCode Worker DS v4 Flash) | `deepseek-v4-flash` (default) | enabled; Responses probe passed |
-| `opencode_worker_ds_v4_pro` (OpenCode Worker DS v4 Pro) | `deepseek-v4-pro` | enabled; Responses probe passed |
+| `opencode_worker_ds_flash` (OpenCode Worker DS Flash) | `deepseek-v4-flash` (default) | enabled; Responses probe passed |
+| `opencode_worker_ds_pro` (OpenCode Worker DS Pro) | `deepseek-v4-pro` | enabled; Responses probe passed |
 
 The parent-side routing policy lives in
 [`config/opencode-worker-routing.json`](config/opencode-worker-routing.json).
@@ -45,11 +45,11 @@ Ask Codex to read and follow
 [prompts/install-with-codex.md](prompts/install-with-codex.md) from this
 repository. The installer adds:
 
-- `<codex-home>/agents/opencode-worker-ds-v4-flash.toml` and `opencode-worker-ds-v4-pro.toml`
+- `<codex-home>/agents/opencode-worker-ds-flash.toml` and `opencode-worker-ds-pro.toml`
 - `<codex-home>/skills/use-opencode-worker/`
 - `<codex-home>/hooks/codex-opencode-subagent/plaintext_handoff.py`
 - one `SubagentStart` Hook matching
-  `^(opencode_worker_ds_v4_flash|opencode_worker_ds_v4_pro)$`
+  `^(opencode_worker_ds_flash|opencode_worker_ds_pro)$`
 - a marked `$use-opencode-worker` index in the personal `AGENTS.md`
 
 It does not switch the main model/provider and makes no OpenCode Go call during
@@ -58,7 +58,7 @@ installation.
 ### 3. Trust the Hook, then test
 
 1. Enter `/hooks` in Codex and confirm the Hook matches only the two
-   `opencode_worker_ds_v4_flash` and `opencode_worker_ds_v4_pro` agent types and points to the installed
+   `opencode_worker_ds_flash` and `opencode_worker_ds_pro` agent types and points to the installed
    `plaintext_handoff.py`, then trust it.
 2. Start a new Codex task. A task that was already running is not guaranteed to
    reload the new Hook.
@@ -79,7 +79,7 @@ The quick smoke passes only when all of these are true:
 
 ## If it does not work
 
-- **`opencode_worker_ds_v4_flash` is missing:** start a new task first; if it is still
+- **`opencode_worker_ds_flash` is missing:** start a new task first; if it is still
   missing, restart Codex once.
 - **The child says no task arrived:** the Hook is usually untrusted, the current
   task predates installation, or the Hook did not load. Check `/hooks`, then
